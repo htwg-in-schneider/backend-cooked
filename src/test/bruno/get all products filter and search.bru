@@ -1,0 +1,21 @@
+meta {
+  name: get all products filter and search
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:8081/api/product?name=Modell&category=DOUBLE_BASS
+  body: none
+  auth: inherit
+}
+
+params:query {
+  name: Modell
+  category: DOUBLE_BASS
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

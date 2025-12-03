@@ -1,0 +1,16 @@
+meta {
+  name: get category translation
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://localhost:8081/api/category/translation
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

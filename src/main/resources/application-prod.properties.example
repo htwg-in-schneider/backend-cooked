@@ -1,0 +1,5 @@
+# copy this file to application-prod.properties and fill in the details
+spring.datasource.url=jdbc:mariadb://host:port/dbname
+spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+spring.datasource.username=user
+spring.datasource.password=password

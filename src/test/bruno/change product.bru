@@ -1,0 +1,26 @@
+meta {
+  name: change product
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:8081/api/product/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "title": "Geige Modell Paganini",
+      "description": "Klingt schön",
+      "category": "VIOLIN",
+      "price": 1900.0,
+      "imageUrl": "https://neshanjo.github.io/saitenweise-images/violin_pro.jpg"
+    }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
