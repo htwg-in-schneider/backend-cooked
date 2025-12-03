@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>de.htwg.in.schneider.saitenweise</groupId>
-	<artifactId>saitenweise-backend</artifactId>
+	<artifactId>cooked-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>saitenweise-backend</name>
 	<description>Backend for Saitenweise Shop</description>
