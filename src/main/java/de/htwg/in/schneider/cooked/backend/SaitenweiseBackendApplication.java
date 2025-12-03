@@ -1,4 +1,4 @@
-package de.htwg.in.schneider.saitenweise.backend;
+package de.htwg.in.schneider.cooked.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,8 +1,8 @@
-package de.htwg.in.schneider.saitenweise.backend.controller;
+package de.htwg.in.schneider.cooked.backend.controller;
 
 import org.springframework.web.bind.annotation.*;
 
-import de.htwg.in.schneider.saitenweise.backend.model.Category;
+import de.htwg.in.schneider.cooked.backend.model.Category;
 
 import java.util.Arrays;
 import java.util.List;

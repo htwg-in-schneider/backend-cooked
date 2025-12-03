@@ -1,13 +1,14 @@
-package de.htwg.in.schneider.saitenweise.backend.controller;
+package de.htwg.in.schneider.cooked.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
 
-import de.htwg.in.schneider.saitenweise.backend.model.Review;
-import de.htwg.in.schneider.saitenweise.backend.model.Product;
-import de.htwg.in.schneider.saitenweise.backend.repository.ReviewRepository;
-import de.htwg.in.schneider.saitenweise.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Review;
+import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
+
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import org.slf4j.Logger;

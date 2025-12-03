@@ -1,4 +1,4 @@
-package de.htwg.in.schneider.saitenweise.backend;
+package de.htwg.in.schneider.cooked.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,4 +1,4 @@
-package de.htwg.in.schneider.saitenweise.backend.config;
+package de.htwg.in.schneider.cooked.backend.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
