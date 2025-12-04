@@ -36,9 +36,9 @@ public class DataLoader {
     private void loadInitialData(ProductRepository repository, ReviewRepository reviewRepository) {
         Product recipe1 = new Product();
         recipe1.setTitle("Marry Me Chicken Ramen");
+        // recipe1.setDescription("Ein cremiges Nudelgericht mit Hähnchen, das so gut
+        // schmeckt, dass man sofort einen Heiratsantrag bekommt!");
         recipe1.setDescription(
-                "Ein cremiges Nudelgericht mit Hähnchen, das so gut schmeckt, dass man sofort einen Heiratsantrag bekommt!");
-        recipe1.setInstructions(
                 "Hähnchen in Stücke schneiden und anbraten.\n" +
                         "Knoblauch und Chili hinzufügen und kurz mitbraten.\n" +
                         "Brühe und Sahne dazugeben und 5 Minuten köcheln lassen.\n" +
@@ -52,8 +52,9 @@ public class DataLoader {
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
         recipe2.setTitle("Spaghetti Bolognese");
-        recipe2.setDescription("Der Klassiker schlechthin. Fruchtige Tomatensoße, Hackfleisch und viel Liebe.");
-        recipe2.setInstructions(
+        // recipe2.setDescription("Der Klassiker schlechthin. Fruchtige Tomatensoße,
+        // Hackfleisch und viel Liebe.");
+        recipe2.setDescription(
                 "Zwiebeln und Knoblauch hacken.\n" +
                         "Hackfleisch anbraten.\n" +
                         "Tomatenmark unterrühren.\n" +
@@ -68,9 +69,9 @@ public class DataLoader {
         // --- REZEPT 3: Wedges (Vegetarian) ---
         Product recipe3 = new Product();
         recipe3.setTitle("Kartoffelwedges mit Gurkensalat");
+        // recipe3.setDescription("Knusprige Kartoffelspalten aus dem Ofen, serviert mit
+        // einem frischen, dilligen Gurkensalat.");
         recipe3.setDescription(
-                "Knusprige Kartoffelspalten aus dem Ofen, serviert mit einem frischen, dilligen Gurkensalat.");
-        recipe3.setInstructions(
                 "Kartoffeln in Spalten schneiden.\n" +
                         "Mit Öl und Gewürzen mischen.\n" +
                         "35–40 Minuten im Ofen backen.\n" +
