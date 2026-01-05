@@ -9,7 +9,5 @@ import de.htwg.in.schneider.cooked.backend.model.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByNameContainingIgnoreCase(String name);
     List<User> findByEmailContainingIgnoreCase(String email);
-
-    // neu:
     User findFirstByEmailIgnoreCase(String email);
 }
