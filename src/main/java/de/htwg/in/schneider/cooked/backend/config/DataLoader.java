@@ -1,5 +1,9 @@
 package de.htwg.in.schneider.cooked.backend.config;
 
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,12 +12,10 @@ import org.springframework.context.annotation.Profile;
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.Review;
+import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
-
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @Configuration
 @Profile("!test")
@@ -22,23 +24,53 @@ public class DataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     @Bean
-    public CommandLineRunner loadData(ProductRepository repository, ReviewRepository reviewRepository) {
+    public CommandLineRunner loadData(
+            ProductRepository repository,
+            ReviewRepository reviewRepository,
+            UserRepository userRepository) {
+
         return args -> {
             if (repository.count() == 0) {
                 LOGGER.info("Datenbank ist leer. Lade Rezepte...");
                 loadInitialData(repository, reviewRepository);
+
+                // Users nur einmal initial laden
+                if (userRepository.count() == 0) {
+                    LOGGER.info("Lade Test-User...");
+                    loadInitialUsers(userRepository);
+                }
+
             } else {
                 LOGGER.info("Datenbank enthält bereits Daten.");
             }
         };
     }
 
+    private void loadInitialUsers(UserRepository userRepository) {
+        User u1 = new User();
+        u1.setName("Melina Maier");
+        u1.setEmail("maiermelina04@gmail.com");
+        u1.setRole("ADMIN");
+
+        User u2 = new User();
+        u2.setName("Anna");
+        u2.setEmail("anna@example.com");
+        u2.setRole("USER");
+
+        User u3 = new User();
+        u3.setName("Ben");
+        u3.setEmail("ben@example.com");
+        u3.setRole("USER");
+
+        userRepository.saveAll(Arrays.asList(u1, u2, u3));
+        LOGGER.info("Test-User erfolgreich geladen.");
+    }
+
     private void loadInitialData(ProductRepository repository, ReviewRepository reviewRepository) {
+
         Product recipe1 = new Product();
         recipe1.setTitle("Marry Me Chicken Ramen");
         recipe1.setDescription(
-                "Ein cremiges Nudelgericht mit Hähnchen, das so gut schmeckt, dass man sofort einen Heiratsantrag bekommt!");
-        recipe1.setInstructions(
                 "Hähnchen in Stücke schneiden und anbraten.\n" +
                         "Knoblauch und Chili hinzufügen und kurz mitbraten.\n" +
                         "Brühe und Sahne dazugeben und 5 Minuten köcheln lassen.\n" +
@@ -52,8 +84,7 @@ public class DataLoader {
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
         recipe2.setTitle("Spaghetti Bolognese");
-        recipe2.setDescription("Der Klassiker schlechthin. Fruchtige Tomatensoße, Hackfleisch und viel Liebe.");
-        recipe2.setInstructions(
+        recipe2.setDescription(
                 "Zwiebeln und Knoblauch hacken.\n" +
                         "Hackfleisch anbraten.\n" +
                         "Tomatenmark unterrühren.\n" +
@@ -69,8 +100,6 @@ public class DataLoader {
         Product recipe3 = new Product();
         recipe3.setTitle("Kartoffelwedges mit Gurkensalat");
         recipe3.setDescription(
-                "Knusprige Kartoffelspalten aus dem Ofen, serviert mit einem frischen, dilligen Gurkensalat.");
-        recipe3.setInstructions(
                 "Kartoffeln in Spalten schneiden.\n" +
                         "Mit Öl und Gewürzen mischen.\n" +
                         "35–40 Minuten im Ofen backen.\n" +
