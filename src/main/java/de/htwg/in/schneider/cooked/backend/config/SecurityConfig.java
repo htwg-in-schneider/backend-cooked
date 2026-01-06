@@ -36,6 +36,9 @@ public class SecurityConfig {
                 // Public (dein Frontend lädt Rezepte ohne Login)
                 .requestMatchers(HttpMethod.GET, "/api/recipes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/review/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/review/**").permitAll()
 
                 // Profil / Me
                 .requestMatchers("/api/me/**").authenticated()

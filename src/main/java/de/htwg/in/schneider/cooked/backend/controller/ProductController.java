@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +24,6 @@ import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 
 @RestController
 @RequestMapping("/api/recipes")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ProductController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
@@ -58,6 +56,10 @@ public class ProductController {
             product.setId(null);
         }
 
+        if (product.getInstructions() == null && product.getDescription() != null) {
+            product.setInstructions(product.getDescription());
+        }
+
         Product newProduct = productRepository.save(product);
 
         transactionService.log(
@@ -88,7 +90,11 @@ public class ProductController {
         product.setDescription(productDetails.getDescription());
         product.setCategory(productDetails.getCategory());
         product.setImageUrl(productDetails.getImageUrl());
-        product.setInstructions(productDetails.getInstructions());
+        if (productDetails.getInstructions() != null) {
+            product.setInstructions(productDetails.getInstructions());
+        } else if (productDetails.getDescription() != null) {
+            product.setInstructions(productDetails.getDescription());
+        }
         product.setPrepTimeMinutes(productDetails.getPrepTimeMinutes());
 
         Product updatedProduct = productRepository.save(product);
