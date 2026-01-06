@@ -1,9 +1,20 @@
 package de.htwg.in.schneider.cooked.backend.model;
 
-import jakarta.persistence.*;
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
 
 @Entity
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -15,16 +26,25 @@ public class Product {
 
     private String title;
 
-    @Column(length = 5000) // Erlaubt lange Texte für die Zubereitung
+    // Erlaubt lange Texte fuer die Zubereitung
+    @Lob
     private String description;
 
-    @Column(length = 8000)
+    @Lob
     private String instructions;
+
+    @Lob
+    @Convert(converter = IngredientListConverter.class)
+    private List<Ingredient> ingredients;
+
+    @Lob
+    @Convert(converter = RecipeStepListConverter.class)
+    private List<RecipeStep> steps;
 
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    // WICHTIG: Statt Preis haben wir jetzt Minuten!
+    // Statt Preis haben wir jetzt Minuten
     private Integer prepTimeMinutes;
 
     private String imageUrl;
@@ -35,8 +55,6 @@ public class Product {
 
     public Product() {
     }
-
-    // --- Getters & Setters ---
 
     public Long getId() {
         return id;
@@ -68,6 +86,22 @@ public class Product {
 
     public void setInstructions(String instructions) {
         this.instructions = instructions;
+    }
+
+    public List<Ingredient> getIngredients() {
+        return ingredients;
+    }
+
+    public void setIngredients(List<Ingredient> ingredients) {
+        this.ingredients = ingredients;
+    }
+
+    public List<RecipeStep> getSteps() {
+        return steps;
+    }
+
+    public void setSteps(List<RecipeStep> steps) {
+        this.steps = steps;
     }
 
     public Category getCategory() {

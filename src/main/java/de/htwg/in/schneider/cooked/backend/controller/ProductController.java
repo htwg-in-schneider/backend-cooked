@@ -96,6 +96,8 @@ public class ProductController {
             product.setInstructions(productDetails.getDescription());
         }
         product.setPrepTimeMinutes(productDetails.getPrepTimeMinutes());
+        product.setIngredients(productDetails.getIngredients());
+        product.setSteps(productDetails.getSteps());
 
         Product updatedProduct = productRepository.save(product);
 
