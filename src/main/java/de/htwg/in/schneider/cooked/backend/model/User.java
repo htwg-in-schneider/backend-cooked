@@ -19,6 +19,8 @@ public class User {
     private String name;
     private String email;
     private String role;
+    @Column(name = "oauth_id")
+    private String oauthId;
     @Column(name = "avatar_url", length = 1000)
     private String avatarUrl;
 
@@ -61,6 +63,14 @@ public class User {
     
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getOauthId() {
+        return oauthId;
+    }
+
+    public void setOauthId(String oauthId) {
+        this.oauthId = oauthId;
     }
 
     public String getAvatarUrl() {

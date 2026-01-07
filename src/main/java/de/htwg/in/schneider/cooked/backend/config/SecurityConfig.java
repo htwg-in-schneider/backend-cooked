@@ -50,6 +50,7 @@ public class SecurityConfig {
 
                 // Profil / Me
                 .requestMatchers("/api/me/**").authenticated()
+                .requestMatchers("/api/profile/**").authenticated()
 
                 // Admin-only
                 .requestMatchers("/api/users/**").hasRole("ADMIN")

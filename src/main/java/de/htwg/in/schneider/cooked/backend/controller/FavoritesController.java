@@ -81,12 +81,24 @@ public class FavoritesController {
     }
 
     private User loadUser(Jwt jwt) {
+        String oauthId = extractOauthId(jwt);
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
             throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
         }
         User user = userRepository.findFirstByEmailIgnoreCase(email.trim());
         if (user != null) {
+            if (user.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
+                user.setOauthId(oauthId);
+                userRepository.save(user);
+            }
             return user;
         }
 
@@ -94,6 +106,7 @@ public class FavoritesController {
         created.setEmail(email.trim());
         created.setName(resolveName(jwt, email));
         created.setRole(resolveRole(jwt));
+        created.setOauthId(oauthId);
         return userRepository.save(created);
     }
 
@@ -133,5 +146,12 @@ public class FavoritesController {
             email = jwt.getClaimAsString("https://cooked.api/email");
         }
         return email;
+    }
+
+    private String extractOauthId(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        return jwt.getSubject();
     }
 }

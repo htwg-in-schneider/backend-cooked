@@ -14,7 +14,7 @@ import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @RestController
-@RequestMapping("/api/me")
+@RequestMapping({"/api/me", "/api/profile"})
 public class MeController {
 
     private final UserRepository userRepository;
@@ -25,11 +25,15 @@ public class MeController {
 
     @GetMapping
     public User me(@AuthenticationPrincipal Jwt jwt) {
-        String email = jwt.getClaimAsString("email");
-        if (email == null) {
-            email = jwt.getClaimAsString("https://cooked.api/email");
+        String oauthId = extractOauthId(jwt);
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
         }
 
+        String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
             throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
         }
@@ -40,14 +44,27 @@ public class MeController {
             created.setEmail(email.trim());
             created.setName(resolveName(jwt, email));
             created.setRole(resolveRole(jwt));
+            created.setOauthId(oauthId);
             return userRepository.save(created);
         }
 
+        if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
+            u.setOauthId(oauthId);
+            return userRepository.save(u);
+        }
         return u;
     }
 
     @PutMapping
     public User updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody UpdateRequest req) {
+        String oauthId = extractOauthId(jwt);
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return saveUpdated(byOauth, req);
+            }
+        }
+
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
             throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
@@ -58,18 +75,11 @@ public class MeController {
             u = new User();
             u.setEmail(email.trim());
             u.setRole(resolveRole(jwt));
+            u.setOauthId(oauthId);
+        } else if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
+            u.setOauthId(oauthId);
         }
-
-        if (req != null) {
-            if (req.name != null && !req.name.trim().isEmpty()) {
-                u.setName(req.name.trim());
-            }
-            if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
-                u.setAvatarUrl(req.avatarUrl.trim());
-            }
-        }
-
-        return userRepository.save(u);
+        return saveUpdated(u, req);
     }
 
     private String resolveName(Jwt jwt, String email) {
@@ -108,6 +118,26 @@ public class MeController {
             email = jwt.getClaimAsString("https://cooked.api/email");
         }
         return email;
+    }
+
+    private String extractOauthId(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        return jwt.getSubject();
+    }
+
+    private User saveUpdated(User u, UpdateRequest req) {
+        if (req != null) {
+            if (req.name != null && !req.name.trim().isEmpty()) {
+                u.setName(req.name.trim());
+            }
+            if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
+                u.setAvatarUrl(req.avatarUrl.trim());
+            }
+        }
+
+        return userRepository.save(u);
     }
 
     private static class UpdateRequest {
