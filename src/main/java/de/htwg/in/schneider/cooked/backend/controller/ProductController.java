@@ -25,7 +25,7 @@ import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 
 @RestController
-@RequestMapping("/api/recipes")
+@RequestMapping({"/api/recipes", "/api/recipe", "/api/products", "/api/product"})
 public class ProductController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
