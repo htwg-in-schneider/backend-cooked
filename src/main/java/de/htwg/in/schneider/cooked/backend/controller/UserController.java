@@ -51,6 +51,7 @@ public class UserController {
         String name = updated.getName() != null ? updated.getName().trim() : "";
         String email = updated.getEmail() != null ? updated.getEmail().trim() : "";
         String role = updated.getRole() != null ? updated.getRole().trim() : "";
+        String avatarUrl = updated.getAvatarUrl() != null ? updated.getAvatarUrl().trim() : "";
 
         if (name.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name darf nicht leer sein");
         if (name.length() < 2) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu kurz (mind. 2 Zeichen)");
@@ -77,6 +78,9 @@ public class UserController {
         existing.setName(name);
         existing.setEmail(email);
         existing.setRole(role);
+        if (!avatarUrl.isEmpty()) {
+            existing.setAvatarUrl(avatarUrl);
+        }
 
         return userRepository.save(existing);
     }

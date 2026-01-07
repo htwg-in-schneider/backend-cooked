@@ -8,8 +8,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,8 +39,13 @@ public class Product {
     @Convert(converter = RecipeStepListConverter.class)
     private List<RecipeStep> steps;
 
-    @Enumerated(EnumType.STRING)
-    private Category category;
+    @Lob
+    @Convert(converter = CategoryListConverter.class)
+    @jakarta.persistence.Column(name = "category")
+    private List<Category> categories;
+
+    @jakarta.persistence.Column(name = "created_by_email", length = 320)
+    private String createdByEmail;
 
     // Statt Preis haben wir jetzt Minuten
     private Integer prepTimeMinutes;
@@ -104,12 +107,20 @@ public class Product {
         this.steps = steps;
     }
 
-    public Category getCategory() {
-        return category;
+    public List<Category> getCategories() {
+        return categories;
     }
 
-    public void setCategory(Category category) {
-        this.category = category;
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
     }
 
     public Integer getPrepTimeMinutes() {

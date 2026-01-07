@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +38,21 @@ public class ReviewController {
     @Autowired
     private TransactionService transactionService;
 
-    private String getActorEmail(HttpServletRequest request) {
-        String email = request.getHeader("X-User-Email");
-        return (email == null || email.isBlank()) ? "unknown" : email;
+    private String getActorEmail(HttpServletRequest request, Jwt jwt) {
+        String email = extractEmail(jwt);
+        if (email != null && !email.isBlank()) {
+            return email;
+        }
+        String headerEmail = request.getHeader("X-User-Email");
+        return (headerEmail == null || headerEmail.isBlank()) ? "unknown" : headerEmail;
+    }
+
+    private String getActorName(Jwt jwt, String fallback) {
+        String name = extractName(jwt);
+        if (name != null && !name.isBlank()) {
+            return name;
+        }
+        return (fallback == null || fallback.isBlank()) ? "unknown" : fallback;
     }
 
     @GetMapping
@@ -58,7 +72,7 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<Review> createReview(@RequestBody Review review, HttpServletRequest request) {
+    public ResponseEntity<Review> createReview(@RequestBody Review review, HttpServletRequest request, @AuthenticationPrincipal Jwt jwt) {
 
         Long productId = null;
         if (review != null && review.getProduct() != null) {
@@ -108,8 +122,8 @@ public class ReviewController {
                 "CREATE",
                 "REVIEW",
                 saved.getId(),
-                saved.getUserName() != null ? saved.getUserName().trim() : "unknown",
-                getActorEmail(request),
+                getActorName(jwt, saved.getUserName()),
+                getActorEmail(request, jwt),
                 "Review erstellt: " + stars + " Sterne zu Product #" + product.getId()
         );
 
@@ -117,7 +131,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteReview(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<Object> deleteReview(@PathVariable Long id, HttpServletRequest request, @AuthenticationPrincipal Jwt jwt) {
         LOG.info("Attempting to delete review with id {}", id);
 
         Review review = reviewRepository.findById(id).orElse(null);
@@ -127,9 +141,7 @@ public class ReviewController {
         }
 
         Long productId = (review.getProduct() != null) ? review.getProduct().getId() : null;
-        String userName = (review.getUserName() != null && !review.getUserName().isBlank())
-                ? review.getUserName().trim()
-                : "unknown";
+        String userName = getActorName(jwt, review.getUserName());
 
         reviewRepository.delete(review);
         LOG.info("Deleted review with id {}", id);
@@ -140,10 +152,33 @@ public class ReviewController {
                 "REVIEW",
                 id,
                 userName,
-                getActorEmail(request),
+                getActorEmail(request, jwt),
                 "Review gelöscht (gehörte zu Product #" + productId + ")"
         );
 
         return ResponseEntity.noContent().build();
     }
-}
+    private String extractEmail(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        return email;
+    }
+
+    private String extractName(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String name = jwt.getClaimAsString("name");
+        if (name == null || name.isBlank()) {
+            name = jwt.getClaimAsString("nickname");
+        }
+        if ((name == null || name.isBlank()) && extractEmail(jwt) != null) {
+            return extractEmail(jwt);
+        }
+        return name;
+    }\r\n}

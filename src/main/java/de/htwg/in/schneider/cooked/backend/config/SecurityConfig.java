@@ -32,6 +32,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Preflight immer erlauben
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/recipes/mine").authenticated()
+                .requestMatchers("/api/favorites/**").authenticated()
 
                 // Public (dein Frontend lädt Rezepte ohne Login)
                 .requestMatchers(HttpMethod.GET, "/api/recipes/**").permitAll()

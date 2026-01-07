@@ -18,6 +18,7 @@ import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,7 +48,7 @@ public class ProductControllerTest {
                 Product product = new Product();
                 product.setTitle("Spaghetti Carbonara");
                 product.setDescription("Ein italienischer Klassiker mit Ei und Speck.");
-                product.setCategory(Category.ITALIAN);
+                product.setCategories(List.of(Category.ITALIAN));
                 product.setPrepTimeMinutes(20);
                 product.setImageUrl("https://example.com/carbonara.jpg");
                 productRepository.save(product);
@@ -57,7 +58,7 @@ public class ProductControllerTest {
                                 .andExpect(jsonPath("$[0].title").value("Spaghetti Carbonara"))
                                 .andExpect(jsonPath("$[0].description")
                                                 .value("Ein italienischer Klassiker mit Ei und Speck."))
-                                .andExpect(jsonPath("$[0].category").value("ITALIAN"))
+                                .andExpect(jsonPath("$[0].categories[0]").value("ITALIAN"))
                                 .andExpect(jsonPath("$[0].prepTimeMinutes").value(20))
                                 .andExpect(jsonPath("$[0].imageUrl").value("https://example.com/carbonara.jpg"));
         }
@@ -67,7 +68,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Leckere Pizza");
                 p1.setDescription("Tomate Mozzarella.");
-                p1.setCategory(Category.ITALIAN);
+                p1.setCategories(List.of(Category.ITALIAN));
                 p1.setPrepTimeMinutes(30);
                 p1.setImageUrl("https://example.com/pizza.jpg");
                 productRepository.save(p1);
@@ -75,7 +76,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Leckere Suppe");
                 p2.setDescription("Kürbissuppe.");
-                p2.setCategory(Category.VEGETARIAN);
+                p2.setCategories(List.of(Category.VEGETARIAN));
                 p2.setPrepTimeMinutes(45);
                 p2.setImageUrl("https://example.com/soup.jpg");
                 productRepository.save(p2);
@@ -92,7 +93,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Pizza Salami");
                 p1.setDescription("Mit viel Käse.");
-                p1.setCategory(Category.ITALIAN);
+                p1.setCategories(List.of(Category.ITALIAN));
                 p1.setPrepTimeMinutes(25);
                 p1.setImageUrl("https://example.com/salami.jpg");
                 productRepository.save(p1);
@@ -100,7 +101,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Pad Thai");
                 p2.setDescription("Nudeln aus Thailand.");
-                p2.setCategory(Category.ASIAN);
+                p2.setCategories(List.of(Category.ASIAN));
                 p2.setPrepTimeMinutes(40);
                 p2.setImageUrl("https://example.com/padthai.jpg");
                 productRepository.save(p2);
@@ -116,7 +117,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Classic Burger");
                 p1.setDescription("Rindfleisch Burger.");
-                p1.setCategory(Category.AMERICAN);
+                p1.setCategories(List.of(Category.AMERICAN));
                 p1.setPrepTimeMinutes(15);
                 p1.setImageUrl("https://example.com/burger.jpg");
                 productRepository.save(p1);
@@ -124,7 +125,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Modern Burger");
                 p2.setDescription("Veganer Burger.");
-                p2.setCategory(Category.AMERICAN);
+                p2.setCategories(List.of(Category.AMERICAN));
                 p2.setPrepTimeMinutes(20);
                 p2.setImageUrl("https://example.com/vegan_burger.jpg");
                 productRepository.save(p2);
@@ -142,7 +143,7 @@ public class ProductControllerTest {
                 Product product = new Product();
                 product.setTitle("Lasagne");
                 product.setDescription("Schicht für Schicht ein Gedicht.");
-                product.setCategory(Category.ITALIAN);
+                product.setCategories(List.of(Category.ITALIAN));
                 product.setPrepTimeMinutes(90);
                 product.setImageUrl("https://example.com/lasagne.jpg");
                 Long id = productRepository.save(product).getId();
@@ -151,7 +152,7 @@ public class ProductControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Lasagne"))
                                 .andExpect(jsonPath("$.description").value("Schicht für Schicht ein Gedicht."))
-                                .andExpect(jsonPath("$.category").value("ITALIAN"))
+                                .andExpect(jsonPath("$.categories[0]").value("ITALIAN"))
                                 .andExpect(jsonPath("$.prepTimeMinutes").value(90))
                                 .andExpect(jsonPath("$.imageUrl").value("https://example.com/lasagne.jpg"));
         }
@@ -160,7 +161,7 @@ public class ProductControllerTest {
         public void testCreateProduct() throws Exception {
                 String payload = """
                                 {"title":"Tiramisu","description":"Leckeres Dessert.",
-                                 "category":"DESSERT","prepTimeMinutes":30,
+                                 "categories":["DESSERT"],"prepTimeMinutes":30,
                                  "imageUrl":"https://example.com/tiramisu.jpg"}
                                 """;
 
@@ -169,7 +170,7 @@ public class ProductControllerTest {
                                 .content(payload))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Tiramisu"))
-                                .andExpect(jsonPath("$.category").value("DESSERT"))
+                                .andExpect(jsonPath("$.categories[0]").value("DESSERT"))
                                 .andExpect(jsonPath("$.prepTimeMinutes").value(30))
                                 .andReturn();
 
@@ -185,14 +186,14 @@ public class ProductControllerTest {
                 Product p = new Product();
                 p.setTitle("Alt");
                 p.setDescription("Alt.");
-                p.setCategory(Category.VEGETARIAN);
+                p.setCategories(List.of(Category.VEGETARIAN));
                 p.setPrepTimeMinutes(1);
                 p.setImageUrl("https://example.com/old.jpg");
                 Long id = productRepository.save(p).getId();
 
                 String payload = """
                                 {"title":"Neu","description":"Besser.",
-                                 "category":"ASIAN","prepTimeMinutes":55,
+                                 "categories":["ASIAN"],"prepTimeMinutes":55,
                                  "imageUrl":"https://example.com/new.jpg"}
                                 """;
 
@@ -201,7 +202,7 @@ public class ProductControllerTest {
                                 .content(payload))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Neu"))
-                                .andExpect(jsonPath("$.category").value("ASIAN"));
+                                .andExpect(jsonPath("$.categories[0]").value("ASIAN"));
 
                 Product updated = productRepository.findById(id).orElseThrow();
                 assertEquals("Neu", updated.getTitle());
@@ -213,7 +214,7 @@ public class ProductControllerTest {
                 Product p = new Product();
                 p.setTitle("Delete");
                 p.setDescription("To delete.");
-                p.setCategory(Category.ITALIAN);
+                p.setCategories(List.of(Category.ITALIAN));
                 p.setPrepTimeMinutes(10);
                 p.setImageUrl("https://example.com/d.jpg");
                 Long id = productRepository.save(p).getId();

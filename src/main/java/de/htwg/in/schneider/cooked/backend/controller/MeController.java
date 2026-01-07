@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,6 +46,32 @@ public class MeController {
         return u;
     }
 
+    @PutMapping
+    public User updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody UpdateRequest req) {
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+        }
+
+        User u = userRepository.findFirstByEmailIgnoreCase(email.trim());
+        if (u == null) {
+            u = new User();
+            u.setEmail(email.trim());
+            u.setRole(resolveRole(jwt));
+        }
+
+        if (req != null) {
+            if (req.name != null && !req.name.trim().isEmpty()) {
+                u.setName(req.name.trim());
+            }
+            if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
+                u.setAvatarUrl(req.avatarUrl.trim());
+            }
+        }
+
+        return userRepository.save(u);
+    }
+
     private String resolveName(Jwt jwt, String email) {
         String name = jwt.getClaimAsString("name");
         if (name != null && !name.isBlank()) {
@@ -69,5 +97,21 @@ public class MeController {
             }
         }
         return "USER";
+    }
+
+    private String extractEmail(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        return email;
+    }
+
+    private static class UpdateRequest {
+        public String name;
+        public String avatarUrl;
     }
 }

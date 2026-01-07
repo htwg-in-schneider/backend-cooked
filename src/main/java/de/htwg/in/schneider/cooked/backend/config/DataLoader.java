@@ -1,6 +1,7 @@
 package de.htwg.in.schneider.cooked.backend.config;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +78,7 @@ public class DataLoader {
                         "Ramen-Nudeln kochen.\n" +
                         "Nudeln mit der Sauce mischen.\n" +
                         "Mit Frühlingszwiebeln, Ei und Sesam garnieren.");
-        recipe1.setCategory(Category.ASIAN);
+        recipe1.setCategories(List.of(Category.ASIAN));
         recipe1.setPrepTimeMinutes(40);
         recipe1.setImageUrl("/frontend-cooked/images/essen1.webp");
 
@@ -92,7 +93,7 @@ public class DataLoader {
                         "Sauce 20–30 Minuten köcheln lassen.\n" +
                         "Spaghetti al dente kochen.\n" +
                         "Mit Parmesan servieren.");
-        recipe2.setCategory(Category.ITALIAN);
+        recipe2.setCategories(List.of(Category.ITALIAN));
         recipe2.setPrepTimeMinutes(60);
         recipe2.setImageUrl("/frontend-cooked/images/essen3.webp");
 
@@ -106,7 +107,7 @@ public class DataLoader {
                         "Gurke hobeln und salzen.\n" +
                         "Mit Joghurt, Dill und Zitronensaft vermengen.\n" +
                         "Zusammen servieren.");
-        recipe3.setCategory(Category.VEGETARIAN);
+        recipe3.setCategories(List.of(Category.VEGETARIAN));
         recipe3.setPrepTimeMinutes(45);
         recipe3.setImageUrl("/frontend-cooked/images/essen2.webp");
 

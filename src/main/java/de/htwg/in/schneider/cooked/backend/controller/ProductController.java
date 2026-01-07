@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,27 +39,33 @@ public class ProductController {
     @GetMapping
     public List<Product> getProducts(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) Category category) {
+            @RequestParam(required = false) String category) {
 
-        if (name != null && category != null) {
-            return productRepository.findByTitleContainingIgnoreCaseAndCategory(name, category);
-        } else if (name != null) {
-            return productRepository.findByTitleContainingIgnoreCase(name);
-        } else if (category != null) {
-            return productRepository.findByCategory(category);
-        } else {
-            return productRepository.findAll();
+        List<Product> base = (name != null && !name.isBlank())
+                ? productRepository.findByTitleContainingIgnoreCase(name)
+                : productRepository.findAll();
+
+        Category categoryEnum = parseCategory(category);
+        if (categoryEnum == null) {
+            return base;
         }
+
+        return base.stream()
+                .filter(p -> p.getCategories() != null && p.getCategories().contains(categoryEnum))
+                .toList();
     }
 
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
+    public Product createProduct(@RequestBody Product product, @AuthenticationPrincipal Jwt jwt) {
         if (product.getId() != null) {
             product.setId(null);
         }
 
         if (product.getInstructions() == null && product.getDescription() != null) {
             product.setInstructions(product.getDescription());
+        }
+        if (product.getCreatedByEmail() == null) {
+            product.setCreatedByEmail(extractEmail(jwt));
         }
 
         Product newProduct = productRepository.save(product);
@@ -66,8 +74,8 @@ public class ProductController {
                 "CREATE",
                 "PRODUCT",
                 newProduct.getId(),
-                "unknown",
-                "unknown",
+                extractName(jwt),
+                extractEmail(jwt),
                 "Rezept erstellt: " + newProduct.getTitle()
         );
 
@@ -78,7 +86,8 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id,
-            @RequestBody Product productDetails) {
+            @RequestBody Product productDetails,
+            @AuthenticationPrincipal Jwt jwt) {
 
         Optional<Product> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
@@ -86,9 +95,12 @@ public class ProductController {
         }
 
         Product product = opt.get();
+        if (!canManage(product, jwt)) {
+            return ResponseEntity.status(403).build();
+        }
         product.setTitle(productDetails.getTitle());
         product.setDescription(productDetails.getDescription());
-        product.setCategory(productDetails.getCategory());
+        product.setCategories(productDetails.getCategories());
         product.setImageUrl(productDetails.getImageUrl());
         if (productDetails.getInstructions() != null) {
             product.setInstructions(productDetails.getInstructions());
@@ -105,8 +117,8 @@ public class ProductController {
                 "UPDATE",
                 "PRODUCT",
                 updatedProduct.getId(),
-                "unknown",
-                "unknown",
+                extractName(jwt),
+                extractEmail(jwt),
                 "Rezept bearbeitet: " + updatedProduct.getTitle()
         );
 
@@ -115,21 +127,26 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Object> deleteProduct(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
         Optional<Product> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Product product = opt.get();
+        if (!canManage(product, jwt)) {
+            return ResponseEntity.status(403).build();
+        }
         productRepository.delete(product);
 
         transactionService.log(
                 "DELETE",
                 "PRODUCT",
                 product.getId(),
-                "unknown",
-                "unknown",
+                extractName(jwt),
+                extractEmail(jwt),
                 "Rezept gelöscht: " + product.getTitle()
         );
 
@@ -142,5 +159,73 @@ public class ProductController {
         Optional<Product> opt = productRepository.findById(id);
         return opt.map(ResponseEntity::ok)
                   .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/mine")
+    public List<Product> getMyProducts(@AuthenticationPrincipal Jwt jwt) {
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return List.of();
+        }
+        return productRepository.findByCreatedByEmailIgnoreCase(email.trim());
+    }
+
+    private String extractEmail(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        return email;
+    }
+
+    private String extractName(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String name = jwt.getClaimAsString("name");
+        if (name == null || name.isBlank()) {
+            name = jwt.getClaimAsString("nickname");
+        }
+        if ((name == null || name.isBlank()) && extractEmail(jwt) != null) {
+            return extractEmail(jwt);
+        }
+        return name;
+    }
+
+    private boolean canManage(Product product, Jwt jwt) {
+        if (jwt == null || product == null) {
+            return false;
+        }
+        if (isAdmin(jwt)) {
+            return true;
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        String createdBy = product.getCreatedByEmail();
+        return createdBy != null && createdBy.equalsIgnoreCase(email.trim());
+    }
+
+    private boolean isAdmin(Jwt jwt) {
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            return false;
+        }
+        return roles.stream().anyMatch(r -> "ADMIN".equalsIgnoreCase(r) || "Admin".equalsIgnoreCase(r));
+    }
+
+    private Category parseCategory(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Category.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
