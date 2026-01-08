@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,7 +27,8 @@ public class UserController {
 
     // GET /api/users?search=...
     @GetMapping
-    public List<User> getUsers(@RequestParam(required = false) String search) {
+    public List<User> getUsers(@AuthenticationPrincipal Jwt jwt, @RequestParam(required = false) String search) {
+        requireAdmin(jwt);
         if (!StringUtils.hasText(search)) {
             return userRepository.findAll();
         }
@@ -45,7 +48,8 @@ public class UserController {
 
     // PUT /api/users/{id}
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updated) {
+    public User updateUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @RequestBody User updated) {
+        requireAdmin(jwt);
 
         // ---- Backend Validierung ----
         String name = updated.getName() != null ? updated.getName().trim() : "";
@@ -83,5 +87,33 @@ public class UserController {
         }
 
         return userRepository.save(existing);
+    }
+
+    private void requireAdmin(Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
+        User u = loadUser(jwt);
+        if (u == null || u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
+        }
+    }
+
+    private User loadUser(Jwt jwt) {
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
     }
 }

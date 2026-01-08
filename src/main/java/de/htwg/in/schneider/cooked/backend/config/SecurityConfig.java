@@ -52,21 +52,21 @@ public class SecurityConfig {
                 .requestMatchers("/api/me/**").authenticated()
                 .requestMatchers("/api/profile/**").authenticated()
 
-                // Admin-only
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers("/api/transactions/**").hasRole("ADMIN")
+                // Admin-only (im Backend prüfen)
+                .requestMatchers("/api/users/**").authenticated()
+                .requestMatchers("/api/transactions/**").authenticated()
 
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(customJwtAuthenticationConverter()))
             );
 
         return http.build();
     }
 
     @Bean
-    Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
+    Converter<Jwt, ? extends AbstractAuthenticationToken> customJwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwtToAuthorities());
         return converter;

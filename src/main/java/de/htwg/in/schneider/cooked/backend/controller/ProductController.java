@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
+import de.htwg.in.schneider.cooked.backend.model.User;
 
 @RestController
 @RequestMapping({"/api/recipes", "/api/recipe", "/api/products", "/api/product"})
@@ -35,6 +37,9 @@ public class ProductController {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping
     public List<Product> getProducts(
@@ -211,11 +216,26 @@ public class ProductController {
     }
 
     private boolean isAdmin(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles == null) {
-            return false;
+        User u = loadUser(jwt);
+        return u != null && u.getRole() != null && "ADMIN".equalsIgnoreCase(u.getRole());
+    }
+
+    private User loadUser(Jwt jwt) {
+        if (jwt == null) {
+            return null;
         }
-        return roles.stream().anyMatch(r -> "ADMIN".equalsIgnoreCase(r) || "Admin".equalsIgnoreCase(r));
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
     }
 
     private Category parseCategory(String value) {

@@ -2,6 +2,7 @@ package de.htwg.in.schneider.cooked.backend.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
@@ -132,6 +134,17 @@ public class MeController {
             if (req.name != null && !req.name.trim().isEmpty()) {
                 u.setName(req.name.trim());
             }
+            if (req.email != null && !req.email.trim().isEmpty()) {
+                String email = req.email.trim();
+                if (!email.matches("^\\S+@\\S+\\.\\S+$")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-Mail muss gültig sein");
+                }
+                User other = userRepository.findFirstByEmailIgnoreCase(email);
+                if (other != null && !other.getId().equals(u.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Diese E-Mail ist bereits vergeben");
+                }
+                u.setEmail(email);
+            }
             if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
                 u.setAvatarUrl(req.avatarUrl.trim());
             }
@@ -142,6 +155,7 @@ public class MeController {
 
     private static class UpdateRequest {
         public String name;
+        public String email;
         public String avatarUrl;
     }
 }
