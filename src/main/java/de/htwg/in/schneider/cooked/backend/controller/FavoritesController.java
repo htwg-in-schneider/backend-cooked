@@ -18,6 +18,7 @@ import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
+import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 
 @RestController
 @RequestMapping("/api/favorites")
@@ -25,10 +26,13 @@ public class FavoritesController {
 
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final TransactionService transactionService;
 
-    public FavoritesController(UserRepository userRepository, ProductRepository productRepository) {
+    public FavoritesController(UserRepository userRepository, ProductRepository productRepository,
+            TransactionService transactionService) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.transactionService = transactionService;
     }
 
     @GetMapping
@@ -58,10 +62,22 @@ public class FavoritesController {
             return ResponseEntity.notFound().build();
         }
         Product product = productOpt.get();
+        boolean added = false;
         if (user.getFavorites().stream().noneMatch(p -> p.getId().equals(productId))) {
             user.getFavorites().add(product);
+            added = true;
         }
         userRepository.save(user);
+        if (added) {
+            transactionService.log(
+                    "FAVORITE_ADD",
+                    "PRODUCT",
+                    product.getId(),
+                    resolveName(jwt, extractEmail(jwt)),
+                    extractEmail(jwt),
+                    "Favorit hinzugefuegt: " + product.getTitle()
+            );
+        }
         return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
     }
 
@@ -71,12 +87,24 @@ public class FavoritesController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long productId) {
         User user = loadUser(jwt);
+        Optional<Product> productOpt = productRepository.findById(productId);
         boolean removed = user.getFavorites()
                 .removeIf(p -> p.getId().equals(productId));
         if (!removed) {
             return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
         }
         userRepository.save(user);
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            transactionService.log(
+                    "FAVORITE_REMOVE",
+                    "PRODUCT",
+                    product.getId(),
+                    resolveName(jwt, extractEmail(jwt)),
+                    extractEmail(jwt),
+                    "Favorit entfernt: " + product.getTitle()
+            );
+        }
         return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
     }
 

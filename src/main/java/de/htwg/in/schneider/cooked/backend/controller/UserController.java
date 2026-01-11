@@ -89,6 +89,15 @@ public class UserController {
         return userRepository.save(existing);
     }
 
+    // DELETE /api/users/{id}
+    @DeleteMapping("/{id}")
+    public void deleteUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        requireAdmin(jwt);
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden"));
+        userRepository.delete(existing);
+    }
+
     private void requireAdmin(Jwt jwt) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");

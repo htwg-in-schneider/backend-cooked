@@ -80,7 +80,7 @@ public class DataLoader {
                         "Mit Frühlingszwiebeln, Ei und Sesam garnieren.");
         recipe1.setCategories(List.of(Category.ASIAN));
         recipe1.setPrepTimeMinutes(40);
-        recipe1.setImageUrl("/frontend-cooked/images/essen1.webp");
+        recipe1.setImageUrl("/images/essen1.webp");
 
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
@@ -95,7 +95,7 @@ public class DataLoader {
                         "Mit Parmesan servieren.");
         recipe2.setCategories(List.of(Category.ITALIAN));
         recipe2.setPrepTimeMinutes(60);
-        recipe2.setImageUrl("/frontend-cooked/images/essen3.webp");
+        recipe2.setImageUrl("/images/essen3.webp");
 
         // --- REZEPT 3: Wedges (Vegetarian) ---
         Product recipe3 = new Product();
@@ -109,7 +109,7 @@ public class DataLoader {
                         "Zusammen servieren.");
         recipe3.setCategories(List.of(Category.VEGETARIAN));
         recipe3.setPrepTimeMinutes(45);
-        recipe3.setImageUrl("/frontend-cooked/images/essen2.webp");
+        recipe3.setImageUrl("/images/essen2.webp");
 
         // Rezepte speichern
         repository.saveAll(Arrays.asList(recipe1, recipe2, recipe3));
@@ -149,3 +149,4 @@ public class DataLoader {
         LOGGER.info("Rezepte und Bewertungen erfolgreich geladen.");
     }
 }
+
