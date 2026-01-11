@@ -132,7 +132,11 @@ public class MeController {
     private User saveUpdated(User u, UpdateRequest req) {
         if (req != null) {
             if (req.name != null && !req.name.trim().isEmpty()) {
-                u.setName(req.name.trim());
+                String name = req.name.trim();
+                if (name.length() < 2) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu kurz (mind. 2 Zeichen)");
+                }
+                u.setName(name);
             }
             if (req.email != null && !req.email.trim().isEmpty()) {
                 String email = req.email.trim();
