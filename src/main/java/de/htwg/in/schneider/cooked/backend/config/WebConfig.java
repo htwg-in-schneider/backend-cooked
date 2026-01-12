@@ -17,9 +17,6 @@ public class WebConfig implements WebMvcConfigurer {
                 // später für GitHub Pages:
                 // "https://<deinname>.github.io"
             )
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            .allowedHeaders("*")
-            .exposedHeaders("*")
-            .allowCredentials(false);
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
     }
 }
