@@ -1,20 +1,37 @@
 package de.htwg.in.schneider.cooked.backend.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import de.htwg.in.schneider.cooked.backend.model.Category;
-import de.htwg.in.schneider.cooked.backend.model.Product;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
-import org.springframework.http.ResponseEntity;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import de.htwg.in.schneider.cooked.backend.model.Category;
+import de.htwg.in.schneider.cooked.backend.model.Ingredient;
+import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
+import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
+import de.htwg.in.schneider.cooked.backend.service.TransactionService;
+import de.htwg.in.schneider.cooked.backend.model.User;
+
 @RestController
-// ÄNDERUNG: Wir nennen es "recipes" (Mehrzahl), damit es zum Frontend passt
-@RequestMapping("/api/recipes")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping({"/api/recipes", "/api/recipe", "/api/products", "/api/product"})
 public class ProductController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
@@ -22,67 +39,310 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
-    @GetMapping
-    public List<Product> getProducts(@RequestParam(required = false) String name,
-            @RequestParam(required = false) Category category) {
+    @Autowired
+    private TransactionService transactionService;
 
-        if (name != null && category != null) {
-            return productRepository.findByTitleContainingIgnoreCaseAndCategory(name, category);
-        } else if (name != null) {
-            return productRepository.findByTitleContainingIgnoreCase(name);
-        } else if (category != null) {
-            return productRepository.findByCategory(category);
-        } else {
-            return productRepository.findAll();
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping
+    public List<Product> getProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category) {
+
+        List<Product> base = (name != null && !name.isBlank())
+                ? productRepository.findByTitleContainingIgnoreCase(name)
+                : productRepository.findAll();
+
+        Category categoryEnum = parseCategory(category);
+        if (categoryEnum == null) {
+            return base;
         }
+
+        return base.stream()
+                .filter(p -> p.getCategories() != null && p.getCategories().contains(categoryEnum))
+                .toList();
     }
 
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
+    public Product createProduct(@RequestBody Product product, @AuthenticationPrincipal Jwt jwt) {
         if (product.getId() != null) {
             product.setId(null);
         }
+
+        if (product.getInstructions() == null && product.getDescription() != null) {
+            product.setInstructions(product.getDescription());
+        }
+        if (product.getCreatedByEmail() == null) {
+            product.setCreatedByEmail(extractEmail(jwt));
+        }
+
+        normalizeProduct(product);
+        validateProduct(product);
+
         Product newProduct = productRepository.save(product);
-        LOG.info("Created new recipe with id " + newProduct.getId());
+
+        transactionService.log(
+                "CREATE",
+                "PRODUCT",
+                newProduct.getId(),
+                extractName(jwt),
+                extractEmail(jwt),
+                "Rezept erstellt: " + newProduct.getTitle()
+        );
+
+        LOG.info("Created new recipe with id {}", newProduct.getId());
         return newProduct;
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product productDetails,
+            @AuthenticationPrincipal Jwt jwt) {
+
         Optional<Product> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Product product = opt.get();
 
-        // Update der Felder
+        Product product = opt.get();
+        if (!canManage(product, jwt)) {
+            return ResponseEntity.status(403).build();
+        }
         product.setTitle(productDetails.getTitle());
         product.setDescription(productDetails.getDescription());
-        product.setCategory(productDetails.getCategory());
+        product.setCategories(productDetails.getCategories());
         product.setImageUrl(productDetails.getImageUrl());
-        product.setInstructions(productDetails.getInstructions());
-
-        // Zeit statt Preis -> Korrekt!
+        if (productDetails.getInstructions() != null) {
+            product.setInstructions(productDetails.getInstructions());
+        } else if (productDetails.getDescription() != null) {
+            product.setInstructions(productDetails.getDescription());
+        }
         product.setPrepTimeMinutes(productDetails.getPrepTimeMinutes());
+        product.setIngredients(productDetails.getIngredients());
+        product.setSteps(productDetails.getSteps());
+
+        normalizeProduct(product);
+        validateProduct(product);
 
         Product updatedProduct = productRepository.save(product);
-        LOG.info("Updated recipe with id " + updatedProduct.getId());
+
+        transactionService.log(
+                "UPDATE",
+                "PRODUCT",
+                updatedProduct.getId(),
+                extractName(jwt),
+                extractEmail(jwt),
+                "Rezept bearbeitet: " + updatedProduct.getTitle()
+        );
+
+        LOG.info("Updated recipe with id {}", updatedProduct.getId());
         return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Object> deleteProduct(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
         Optional<Product> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        productRepository.delete(opt.get());
+
+        Product product = opt.get();
+        if (!canManage(product, jwt)) {
+            return ResponseEntity.status(403).build();
+        }
+        productRepository.delete(product);
+
+        transactionService.log(
+                "DELETE",
+                "PRODUCT",
+                product.getId(),
+                extractName(jwt),
+                extractEmail(jwt),
+                "Rezept gelöscht: " + product.getTitle()
+        );
+
+        LOG.info("Deleted recipe with id {}", product.getId());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         Optional<Product> opt = productRepository.findById(id);
-        return opt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return opt.map(ResponseEntity::ok)
+                  .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/mine")
+    public List<Product> getMyProducts(@AuthenticationPrincipal Jwt jwt) {
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return List.of();
+        }
+        return productRepository.findByCreatedByEmailIgnoreCase(email.trim());
+    }
+
+    private String extractEmail(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        return email;
+    }
+
+    private String extractName(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String name = jwt.getClaimAsString("name");
+        if (name == null || name.isBlank()) {
+            name = jwt.getClaimAsString("nickname");
+        }
+        if ((name == null || name.isBlank()) && extractEmail(jwt) != null) {
+            return extractEmail(jwt);
+        }
+        return name;
+    }
+
+    private boolean canManage(Product product, Jwt jwt) {
+        if (jwt == null || product == null) {
+            return false;
+        }
+        if (isAdmin(jwt)) {
+            return true;
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        String createdBy = product.getCreatedByEmail();
+        return createdBy != null && createdBy.equalsIgnoreCase(email.trim());
+    }
+
+    private boolean isAdmin(Jwt jwt) {
+        User u = loadUser(jwt);
+        return u != null && u.getRole() != null && "ADMIN".equalsIgnoreCase(u.getRole());
+    }
+
+    private User loadUser(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
+    }
+
+    private Category parseCategory(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Category.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private void normalizeProduct(Product product) {
+        if (product.getTitle() != null) {
+            product.setTitle(product.getTitle().trim());
+        }
+        if (product.getDescription() != null) {
+            product.setDescription(product.getDescription().trim());
+        }
+        if (product.getInstructions() != null) {
+            product.setInstructions(product.getInstructions().trim());
+        }
+        if (product.getImageUrl() != null) {
+            product.setImageUrl(product.getImageUrl().trim());
+        }
+        if (product.getIngredients() != null) {
+            for (Ingredient ing : product.getIngredients()) {
+                if (ing.getName() != null) {
+                    ing.setName(ing.getName().trim());
+                }
+                if (ing.getAmount() != null) {
+                    ing.setAmount(ing.getAmount().trim());
+                }
+            }
+        }
+        if (product.getSteps() != null) {
+            for (RecipeStep step : product.getSteps()) {
+                if (step.getText() != null) {
+                    step.setText(step.getText().trim());
+                }
+            }
+        }
+    }
+
+    private void validateProduct(Product product) {
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produktdaten fehlen");
+        }
+        String title = product.getTitle() != null ? product.getTitle().trim() : "";
+        if (title.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel darf nicht leer sein");
+        }
+        if (title.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel ist zu kurz (mind. 3 Zeichen)");
+        }
+        if (product.getCategories() == null || product.getCategories().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Kategorie ist erforderlich");
+        }
+        Integer minutes = product.getPrepTimeMinutes();
+        if (minutes == null || minutes <= 0 || minutes > 9999) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zubereitungszeit ist ungültig");
+        }
+
+        List<Ingredient> ingredients = product.getIngredients();
+        if (ingredients == null || ingredients.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
+        }
+        boolean hasIngredientName = false;
+        for (Ingredient ing : ingredients) {
+            String name = ing != null && ing.getName() != null ? ing.getName().trim() : "";
+            String amount = ing != null && ing.getAmount() != null ? ing.getAmount().trim() : "";
+            if (!name.isEmpty()) {
+                hasIngredientName = true;
+            }
+            if (name.isEmpty() && !amount.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zutat benötigt einen Namen");
+            }
+        }
+        if (!hasIngredientName) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
+        }
+
+        List<RecipeStep> steps = product.getSteps();
+        if (steps == null || steps.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
+        }
+        boolean hasStepText = false;
+        for (RecipeStep step : steps) {
+            String text = step != null && step.getText() != null ? step.getText().trim() : "";
+            if (!text.isEmpty()) {
+                hasStepText = true;
+                break;
+            }
+        }
+        if (!hasStepText) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
+        }
     }
 }

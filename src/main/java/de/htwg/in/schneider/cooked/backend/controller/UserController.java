@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,7 +27,8 @@ public class UserController {
 
     // GET /api/users?search=...
     @GetMapping
-    public List<User> getUsers(@RequestParam(required = false) String search) {
+    public List<User> getUsers(@AuthenticationPrincipal Jwt jwt, @RequestParam(required = false) String search) {
+        requireAdmin(jwt);
         if (!StringUtils.hasText(search)) {
             return userRepository.findAll();
         }
@@ -35,7 +38,7 @@ public class UserController {
         List<User> byName = userRepository.findByNameContainingIgnoreCase(q);
         List<User> byEmail = userRepository.findByEmailContainingIgnoreCase(q);
 
-        // Duplikate sauber über ID vermeiden:
+        // Duplikate sauber über ID vermeiden
         Map<Long, User> merged = new LinkedHashMap<>();
         for (User u : byName) merged.put(u.getId(), u);
         for (User u : byEmail) merged.put(u.getId(), u);
@@ -45,12 +48,14 @@ public class UserController {
 
     // PUT /api/users/{id}
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updated) {
+    public User updateUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @RequestBody User updated) {
+        requireAdmin(jwt);
 
-        // ---- Backend Validierung ----
+        // Backend-Validierung
         String name = updated.getName() != null ? updated.getName().trim() : "";
         String email = updated.getEmail() != null ? updated.getEmail().trim() : "";
         String role = updated.getRole() != null ? updated.getRole().trim() : "";
+        String avatarUrl = updated.getAvatarUrl() != null ? updated.getAvatarUrl().trim() : "";
 
         if (name.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name darf nicht leer sein");
         if (name.length() < 2) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu kurz (mind. 2 Zeichen)");
@@ -77,7 +82,47 @@ public class UserController {
         existing.setName(name);
         existing.setEmail(email);
         existing.setRole(role);
+        if (!avatarUrl.isEmpty()) {
+            existing.setAvatarUrl(avatarUrl);
+        }
 
         return userRepository.save(existing);
+    }
+
+    // DELETE /api/users/{id}
+    @DeleteMapping("/{id}")
+    public void deleteUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        requireAdmin(jwt);
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden"));
+        userRepository.delete(existing);
+    }
+
+    private void requireAdmin(Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
+        User u = loadUser(jwt);
+        if (u == null || u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
+        }
+    }
+
+    private User loadUser(Jwt jwt) {
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("https://cooked.api/email");
+        }
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
     }
 }

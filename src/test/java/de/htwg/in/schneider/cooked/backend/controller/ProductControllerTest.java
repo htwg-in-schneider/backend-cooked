@@ -4,11 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,18 +18,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.config.TestSecurityConfig;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Integration tests for ProductController with /api/recipes.
  */
 @SpringBootTest
-@Profile("test")
+@ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 public class ProductControllerTest {
 
         private MockMvc mockMvc;
@@ -38,7 +44,9 @@ public class ProductControllerTest {
 
         @BeforeEach
         public void setUp(WebApplicationContext context) {
-                this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+                this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                                .apply(springSecurity())
+                                .build();
                 productRepository.deleteAll();
         }
 
@@ -47,7 +55,7 @@ public class ProductControllerTest {
                 Product product = new Product();
                 product.setTitle("Spaghetti Carbonara");
                 product.setDescription("Ein italienischer Klassiker mit Ei und Speck.");
-                product.setCategory(Category.ITALIAN);
+                product.setCategories(List.of(Category.ITALIAN));
                 product.setPrepTimeMinutes(20);
                 product.setImageUrl("https://example.com/carbonara.jpg");
                 productRepository.save(product);
@@ -57,7 +65,7 @@ public class ProductControllerTest {
                                 .andExpect(jsonPath("$[0].title").value("Spaghetti Carbonara"))
                                 .andExpect(jsonPath("$[0].description")
                                                 .value("Ein italienischer Klassiker mit Ei und Speck."))
-                                .andExpect(jsonPath("$[0].category").value("ITALIAN"))
+                                .andExpect(jsonPath("$[0].categories[0]").value("ITALIAN"))
                                 .andExpect(jsonPath("$[0].prepTimeMinutes").value(20))
                                 .andExpect(jsonPath("$[0].imageUrl").value("https://example.com/carbonara.jpg"));
         }
@@ -67,7 +75,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Leckere Pizza");
                 p1.setDescription("Tomate Mozzarella.");
-                p1.setCategory(Category.ITALIAN);
+                p1.setCategories(List.of(Category.ITALIAN));
                 p1.setPrepTimeMinutes(30);
                 p1.setImageUrl("https://example.com/pizza.jpg");
                 productRepository.save(p1);
@@ -75,7 +83,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Leckere Suppe");
                 p2.setDescription("Kürbissuppe.");
-                p2.setCategory(Category.VEGETARIAN);
+                p2.setCategories(List.of(Category.VEGETARIAN));
                 p2.setPrepTimeMinutes(45);
                 p2.setImageUrl("https://example.com/soup.jpg");
                 productRepository.save(p2);
@@ -92,7 +100,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Pizza Salami");
                 p1.setDescription("Mit viel Käse.");
-                p1.setCategory(Category.ITALIAN);
+                p1.setCategories(List.of(Category.ITALIAN));
                 p1.setPrepTimeMinutes(25);
                 p1.setImageUrl("https://example.com/salami.jpg");
                 productRepository.save(p1);
@@ -100,7 +108,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Pad Thai");
                 p2.setDescription("Nudeln aus Thailand.");
-                p2.setCategory(Category.ASIAN);
+                p2.setCategories(List.of(Category.ASIAN));
                 p2.setPrepTimeMinutes(40);
                 p2.setImageUrl("https://example.com/padthai.jpg");
                 productRepository.save(p2);
@@ -116,7 +124,7 @@ public class ProductControllerTest {
                 Product p1 = new Product();
                 p1.setTitle("Classic Burger");
                 p1.setDescription("Rindfleisch Burger.");
-                p1.setCategory(Category.AMERICAN);
+                p1.setCategories(List.of(Category.AMERICAN));
                 p1.setPrepTimeMinutes(15);
                 p1.setImageUrl("https://example.com/burger.jpg");
                 productRepository.save(p1);
@@ -124,7 +132,7 @@ public class ProductControllerTest {
                 Product p2 = new Product();
                 p2.setTitle("Modern Burger");
                 p2.setDescription("Veganer Burger.");
-                p2.setCategory(Category.AMERICAN);
+                p2.setCategories(List.of(Category.AMERICAN));
                 p2.setPrepTimeMinutes(20);
                 p2.setImageUrl("https://example.com/vegan_burger.jpg");
                 productRepository.save(p2);
@@ -142,7 +150,7 @@ public class ProductControllerTest {
                 Product product = new Product();
                 product.setTitle("Lasagne");
                 product.setDescription("Schicht für Schicht ein Gedicht.");
-                product.setCategory(Category.ITALIAN);
+                product.setCategories(List.of(Category.ITALIAN));
                 product.setPrepTimeMinutes(90);
                 product.setImageUrl("https://example.com/lasagne.jpg");
                 Long id = productRepository.save(product).getId();
@@ -151,7 +159,7 @@ public class ProductControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Lasagne"))
                                 .andExpect(jsonPath("$.description").value("Schicht für Schicht ein Gedicht."))
-                                .andExpect(jsonPath("$.category").value("ITALIAN"))
+                                .andExpect(jsonPath("$.categories[0]").value("ITALIAN"))
                                 .andExpect(jsonPath("$.prepTimeMinutes").value(90))
                                 .andExpect(jsonPath("$.imageUrl").value("https://example.com/lasagne.jpg"));
         }
@@ -160,16 +168,20 @@ public class ProductControllerTest {
         public void testCreateProduct() throws Exception {
                 String payload = """
                                 {"title":"Tiramisu","description":"Leckeres Dessert.",
-                                 "category":"DESSERT","prepTimeMinutes":30,
-                                 "imageUrl":"https://example.com/tiramisu.jpg"}
+                                 "categories":["DESSERT"],"prepTimeMinutes":30,
+                                 "imageUrl":"https://example.com/tiramisu.jpg",
+                                 "ingredients":[{"name":"Mascarpone","amount":"250g"}],
+                                 "steps":[{"text":"Alles verrühren."}]}
                                 """;
 
                 MvcResult result = mockMvc.perform(post("/api/recipes")
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(payload))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Tiramisu"))
-                                .andExpect(jsonPath("$.category").value("DESSERT"))
+                                .andExpect(jsonPath("$.categories[0]").value("DESSERT"))
                                 .andExpect(jsonPath("$.prepTimeMinutes").value(30))
                                 .andReturn();
 
@@ -185,23 +197,28 @@ public class ProductControllerTest {
                 Product p = new Product();
                 p.setTitle("Alt");
                 p.setDescription("Alt.");
-                p.setCategory(Category.VEGETARIAN);
+                p.setCategories(List.of(Category.VEGETARIAN));
                 p.setPrepTimeMinutes(1);
                 p.setImageUrl("https://example.com/old.jpg");
+                p.setCreatedByEmail("test@example.com");
                 Long id = productRepository.save(p).getId();
 
                 String payload = """
                                 {"title":"Neu","description":"Besser.",
-                                 "category":"ASIAN","prepTimeMinutes":55,
-                                 "imageUrl":"https://example.com/new.jpg"}
+                                 "categories":["ASIAN"],"prepTimeMinutes":55,
+                                 "imageUrl":"https://example.com/new.jpg",
+                                 "ingredients":[{"name":"Reis","amount":"200g"}],
+                                 "steps":[{"text":"Kochen."}]}
                                 """;
 
                 mockMvc.perform(put("/api/recipes/" + id)
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(payload))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.title").value("Neu"))
-                                .andExpect(jsonPath("$.category").value("ASIAN"));
+                                .andExpect(jsonPath("$.categories[0]").value("ASIAN"));
 
                 Product updated = productRepository.findById(id).orElseThrow();
                 assertEquals("Neu", updated.getTitle());
@@ -213,12 +230,15 @@ public class ProductControllerTest {
                 Product p = new Product();
                 p.setTitle("Delete");
                 p.setDescription("To delete.");
-                p.setCategory(Category.ITALIAN);
+                p.setCategories(List.of(Category.ITALIAN));
                 p.setPrepTimeMinutes(10);
                 p.setImageUrl("https://example.com/d.jpg");
+                p.setCreatedByEmail("test@example.com");
                 Long id = productRepository.save(p).getId();
 
-                mockMvc.perform(delete("/api/recipes/" + id))
+                mockMvc.perform(delete("/api/recipes/" + id)
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User"))))
                                 .andExpect(status().isNoContent());
 
                 assertFalse(productRepository.findById(id).isPresent());

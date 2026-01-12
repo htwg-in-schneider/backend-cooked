@@ -1,6 +1,7 @@
 package de.htwg.in.schneider.cooked.backend.config;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @Configuration
-@Profile("!test")
+@Profile({ "local", "dev" })
 public class DataLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
@@ -77,9 +78,9 @@ public class DataLoader {
                         "Ramen-Nudeln kochen.\n" +
                         "Nudeln mit der Sauce mischen.\n" +
                         "Mit Frühlingszwiebeln, Ei und Sesam garnieren.");
-        recipe1.setCategory(Category.ASIAN);
+        recipe1.setCategories(List.of(Category.ASIAN));
         recipe1.setPrepTimeMinutes(40);
-        recipe1.setImageUrl("/frontend-cooked/images/essen1.webp");
+        recipe1.setImageUrl("/images/essen1.webp");
 
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
@@ -89,12 +90,12 @@ public class DataLoader {
                         "Hackfleisch anbraten.\n" +
                         "Tomatenmark unterrühren.\n" +
                         "Tomaten und Brühe hinzugeben.\n" +
-                        "Sauce 20–30 Minuten köcheln lassen.\n" +
+                        "Sauce 20-30 Minuten köcheln lassen.\n" +
                         "Spaghetti al dente kochen.\n" +
                         "Mit Parmesan servieren.");
-        recipe2.setCategory(Category.ITALIAN);
+        recipe2.setCategories(List.of(Category.ITALIAN));
         recipe2.setPrepTimeMinutes(60);
-        recipe2.setImageUrl("/frontend-cooked/images/essen3.webp");
+        recipe2.setImageUrl("/images/essen3.webp");
 
         // --- REZEPT 3: Wedges (Vegetarian) ---
         Product recipe3 = new Product();
@@ -102,13 +103,13 @@ public class DataLoader {
         recipe3.setDescription(
                 "Kartoffeln in Spalten schneiden.\n" +
                         "Mit Öl und Gewürzen mischen.\n" +
-                        "35–40 Minuten im Ofen backen.\n" +
+                        "35-40 Minuten im Ofen backen.\n" +
                         "Gurke hobeln und salzen.\n" +
                         "Mit Joghurt, Dill und Zitronensaft vermengen.\n" +
                         "Zusammen servieren.");
-        recipe3.setCategory(Category.VEGETARIAN);
+        recipe3.setCategories(List.of(Category.VEGETARIAN));
         recipe3.setPrepTimeMinutes(45);
-        recipe3.setImageUrl("/frontend-cooked/images/essen2.webp");
+        recipe3.setImageUrl("/images/essen2.webp");
 
         // Rezepte speichern
         repository.saveAll(Arrays.asList(recipe1, recipe2, recipe3));

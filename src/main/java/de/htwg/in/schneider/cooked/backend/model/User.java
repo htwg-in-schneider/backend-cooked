@@ -1,5 +1,9 @@
 package de.htwg.in.schneider.cooked.backend.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -15,7 +19,19 @@ public class User {
     private String name;
     private String email;
     private String role;
+    @Column(name = "oauth_id")
+    private String oauthId;
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_favorites",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @JsonIgnore
+    private List<Product> favorites = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -47,5 +63,29 @@ public class User {
     
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getOauthId() {
+        return oauthId;
+    }
+
+    public void setOauthId(String oauthId) {
+        this.oauthId = oauthId;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public List<Product> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(List<Product> favorites) {
+        this.favorites = favorites;
     }
 }

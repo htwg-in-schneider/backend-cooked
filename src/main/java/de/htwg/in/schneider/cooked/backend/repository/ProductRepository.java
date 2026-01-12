@@ -5,14 +5,11 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByTitleContainingIgnoreCase(String title);
 
-    List<Product> findByCategory(Category category);
-
-    List<Product> findByTitleContainingIgnoreCaseAndCategory(String title, Category category);
+    List<Product> findByCreatedByEmailIgnoreCase(String createdByEmail);
 }
