@@ -44,7 +44,7 @@ public class DataLoader {
                 }
 
             } else {
-                LOGGER.info("Datenbank enthaelt bereits Daten.");
+                LOGGER.info("Datenbank enthält bereits Daten.");
             }
         };
     }
@@ -73,24 +73,24 @@ public class DataLoader {
 
         Product recipe1 = new Product();
         recipe1.setTitle("Marry Me Chicken Ramen");
-        recipe1.setDescription("Cremige Ramen mit gebratenem Haehnchen und leichter Chili-Schaerfe.");
+        recipe1.setDescription("Cremige Ramen mit gebratenem Hähnchen und leichter Chili-Schärfe.");
         recipe1.setInstructions(
-                "Haehnchen anbraten, Sauce kochen, Nudeln garen und alles zusammenfuehren.");
+                "Hähnchen anbraten, Sauce kochen, Nudeln garen und alles zusammenführen.");
         recipe1.setCategories(List.of(Category.ASIAN));
         recipe1.setPrepTimeMinutes(40);
         recipe1.setImageUrl("/images/essen1.webp");
 
-        Ingredient ramenChicken = new Ingredient("Haehnchenbrust", "300 g");
+        Ingredient ramenChicken = new Ingredient("Hähnchenbrust", "300 g");
         Ingredient ramenNoodles = new Ingredient("Ramen-Nudeln", "2 Portionen");
         Ingredient ramenGarlic = new Ingredient("Knoblauch", "2 Zehen");
         Ingredient ramenChili = new Ingredient("Chiliflocken", "1/2 TL");
-        Ingredient ramenBroth = new Ingredient("Haehnchenbruehe", "500 ml");
+        Ingredient ramenBroth = new Ingredient("Hähnchenbrühe", "500 ml");
         Ingredient ramenCream = new Ingredient("Sahne", "150 ml");
         Ingredient ramenSoy = new Ingredient("Sojasauce", "1 EL");
         Ingredient ramenParmesan = new Ingredient("Parmesan", "30 g");
-        Ingredient ramenOil = new Ingredient("Oel", "1 EL");
+        Ingredient ramenOil = new Ingredient("Öl", "1 EL");
         Ingredient ramenSalt = new Ingredient("Salz", "nach Geschmack");
-        Ingredient ramenOnion = new Ingredient("Fruehlingszwiebeln", "2 Stangen");
+        Ingredient ramenOnion = new Ingredient("Frühlingszwiebeln", "2 Stangen");
         Ingredient ramenSesame = new Ingredient("Sesam", "1 TL");
         Ingredient ramenEggs = new Ingredient("Eier", "2");
 
@@ -110,24 +110,24 @@ public class DataLoader {
                 ramenEggs));
 
         recipe1.setSteps(List.of(
-                new RecipeStep("Haehnchen in Streifen schneiden, salzen und in Oel goldbraun anbraten.",
+                new RecipeStep("Hähnchen in Streifen schneiden, salzen und in Öl goldbraun anbraten.",
                         List.of(ramenChicken, ramenOil, ramenSalt)),
-                new RecipeStep("Knoblauch und Chiliflocken kurz mitroesten.",
+                new RecipeStep("Knoblauch und Chiliflocken kurz mitrösten.",
                         List.of(ramenGarlic, ramenChili)),
-                new RecipeStep("Bruehe, Sahne, Sojasauce und Parmesan einruehren und 5-7 Minuten koecheln.",
+                new RecipeStep("Brühe, Sahne, Sojasauce und Parmesan einrühren und 5-7 Minuten köcheln.",
                         List.of(ramenBroth, ramenCream, ramenSoy, ramenParmesan)),
                 new RecipeStep("Ramen-Nudeln nach Packung garen und abtropfen lassen.",
                         List.of(ramenNoodles)),
-                new RecipeStep("Nudeln und Haehnchen in die Sauce geben und kurz ziehen lassen.",
+                new RecipeStep("Nudeln und Hähnchen in die Sauce geben und kurz ziehen lassen.",
                         List.of(ramenNoodles, ramenChicken)),
-                new RecipeStep("Mit Fruehlingszwiebeln, Ei und Sesam garnieren.",
+                new RecipeStep("Mit Frühlingszwiebeln, Ei und Sesam garnieren.",
                         List.of(ramenOnion, ramenEggs, ramenSesame))));
 
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
         recipe2.setTitle("Spaghetti Bolognese");
-        recipe2.setDescription("Klassische Bolognese mit Gemuese, Rinderhack und Parmesan.");
-        recipe2.setInstructions("Sauce langsam koecheln lassen und mit Spaghetti servieren.");
+        recipe2.setDescription("Klassische Bolognese mit Gemüse, Rinderhack und Parmesan.");
+        recipe2.setInstructions("Sauce langsam köcheln lassen und mit Spaghetti servieren.");
         recipe2.setCategories(List.of(Category.ITALIAN));
         recipe2.setPrepTimeMinutes(60);
         recipe2.setImageUrl("/images/essen3.webp");
@@ -140,8 +140,8 @@ public class DataLoader {
         Ingredient boloCelery = new Ingredient("Selleriestange", "1");
         Ingredient boloTomatoPaste = new Ingredient("Tomatenmark", "2 EL");
         Ingredient boloTomatoes = new Ingredient("Passierte Tomaten", "400 g");
-        Ingredient boloBroth = new Ingredient("Rinderbruehe", "150 ml");
-        Ingredient boloOil = new Ingredient("Olivenoel", "1 EL");
+        Ingredient boloBroth = new Ingredient("Rinderbrühe", "150 ml");
+        Ingredient boloOil = new Ingredient("Olivenöl", "1 EL");
         Ingredient boloOregano = new Ingredient("Oregano", "1 TL");
         Ingredient boloSalt = new Ingredient("Salz", "nach Geschmack");
         Ingredient boloPepper = new Ingredient("Pfeffer", "nach Geschmack");
@@ -164,13 +164,13 @@ public class DataLoader {
                 boloParmesan));
 
         recipe2.setSteps(List.of(
-                new RecipeStep("Zwiebel, Knoblauch, Karotte und Sellerie fein wuerfeln.",
+                new RecipeStep("Zwiebel, Knoblauch, Karotte und Sellerie fein würfeln.",
                         List.of(boloOnion, boloGarlic, boloCarrot, boloCelery)),
-                new RecipeStep("Oel erhitzen, Gemuese anschwitzen und Hackfleisch braeunen.",
+                new RecipeStep("Öl erhitzen, Gemüse anschwitzen und Hackfleisch bräunen.",
                         List.of(boloOil, boloMeat, boloOnion, boloGarlic, boloCarrot, boloCelery)),
-                new RecipeStep("Tomatenmark kurz anroesten, Tomaten und Bruehe zugeben, wuerzen.",
+                new RecipeStep("Tomatenmark kurz anrösten, Tomaten und Brühe zugeben, würzen.",
                         List.of(boloTomatoPaste, boloTomatoes, boloBroth, boloOregano, boloSalt, boloPepper)),
-                new RecipeStep("Sauce 20-30 Minuten bei kleiner Hitze koecheln lassen.",
+                new RecipeStep("Sauce 20-30 Minuten bei kleiner Hitze köcheln lassen.",
                         List.of(boloTomatoes, boloBroth)),
                 new RecipeStep("Spaghetti in Salzwasser al dente kochen.",
                         List.of(boloSpaghetti, boloSalt)),
@@ -181,13 +181,13 @@ public class DataLoader {
         Product recipe3 = new Product();
         recipe3.setTitle("Kartoffelwedges mit Gurkensalat");
         recipe3.setDescription("Knusprige Ofenwedges mit frischem Gurkensalat.");
-        recipe3.setInstructions("Wedges backen und den Salat waehrenddessen anruehren.");
+        recipe3.setInstructions("Wedges backen und den Salat währenddessen anrühren.");
         recipe3.setCategories(List.of(Category.VEGETARIAN));
         recipe3.setPrepTimeMinutes(45);
         recipe3.setImageUrl("/images/essen2.webp");
 
         Ingredient wedgePotatoes = new Ingredient("Kartoffeln", "600 g");
-        Ingredient wedgeOil = new Ingredient("Oel", "2 EL");
+        Ingredient wedgeOil = new Ingredient("Öl", "2 EL");
         Ingredient wedgePaprika = new Ingredient("Paprikapulver", "1 TL");
         Ingredient wedgeGarlic = new Ingredient("Knoblauchpulver", "1/2 TL");
         Ingredient wedgeSalt = new Ingredient("Salz", "nach Geschmack");
@@ -213,15 +213,15 @@ public class DataLoader {
 
         recipe3.setSteps(List.of(
                 new RecipeStep("Backofen auf 200 C vorheizen.", List.of()),
-                new RecipeStep("Kartoffeln in Spalten schneiden und mit Oel und Gewuerzen mischen.",
+                new RecipeStep("Kartoffeln in Spalten schneiden und mit Öl und Gewürzen mischen.",
                         List.of(wedgePotatoes, wedgeOil, wedgePaprika, wedgeGarlic, wedgeSalt, wedgePepper)),
                 new RecipeStep("Wedges 35-40 Minuten backen, einmal wenden.",
                         List.of(wedgePotatoes)),
-                new RecipeStep("Gurke duenn hobeln, salzen und 10 Minuten ziehen lassen.",
+                new RecipeStep("Gurke dünn hobeln, salzen und 10 Minuten ziehen lassen.",
                         List.of(saladCucumber, wedgeSalt)),
-                new RecipeStep("Joghurt mit Dill, Zitronensaft und Zucker verruehren.",
+                new RecipeStep("Joghurt mit Dill, Zitronensaft und Zucker verrühren.",
                         List.of(saladYogurt, saladDill, saladLemon, saladSugar)),
-                new RecipeStep("Gurke ausdruecken, mit dem Dressing mischen und mit den Wedges servieren.",
+                new RecipeStep("Gurke ausdrücken, mit dem Dressing mischen und mit den Wedges servieren.",
                         List.of(saladCucumber, saladYogurt))));
 
         // Rezepte speichern
@@ -229,33 +229,33 @@ public class DataLoader {
 
         // --- REVIEWS (Bewertungen) ---
 
-        // Bewertungen fuer Marry Me Chicken
+        // Bewertungen für Marry Me Chicken
         Review r1a = new Review();
         r1a.setStars(5);
-        r1a.setText("Cremig und perfekt wuerzig, die Sauce passt super zu Ramen.");
+        r1a.setText("Cremig und perfekt würzig, die Sauce passt super zu Ramen.");
         r1a.setUserName("Anna");
         r1a.setProduct(recipe1);
 
         Review r1b = new Review();
         r1b.setStars(4);
-        r1b.setText("Sehr lecker, naechstes Mal nehme ich weniger Chili.");
+        r1b.setText("Sehr lecker, nächstes Mal nehme ich weniger Chili.");
         r1b.setUserName("Oli");
         r1b.setProduct(recipe1);
 
-        // Bewertungen fuer Spaghetti
+        // Bewertungen für Spaghetti
         Review r2a = new Review();
         r2a.setStars(5);
-        r2a.setText("Schmeckt wie beim Italiener, schoen sossig.");
+        r2a.setText("Schmeckt wie beim Italiener, schön sossig.");
         r2a.setUserName("Ben");
         r2a.setProduct(recipe2);
 
         Review r2b = new Review();
         r2b.setStars(4);
-        r2b.setText("Gute Alltags-Bolognese mit frischem Gemuese.");
+        r2b.setText("Gute Alltags-Bolognese mit frischem Gemüse.");
         r2b.setUserName("Lena");
         r2b.setProduct(recipe2);
 
-        // Bewertungen fuer Wedges
+        // Bewertungen für Wedges
         Review r3a = new Review();
         r3a.setStars(5);
         r3a.setText("Knusprige Wedges und frischer Salat, top Kombination.");
@@ -264,7 +264,7 @@ public class DataLoader {
 
         Review r3b = new Review();
         r3b.setStars(4);
-        r3b.setText("Gurkensalat war erfrischend, ich wuerde mehr Dill nehmen.");
+        r3b.setText("Gurkensalat war erfrischend, ich würde mehr Dill nehmen.");
         r3b.setUserName("Mila");
         r3b.setProduct(recipe3);
 

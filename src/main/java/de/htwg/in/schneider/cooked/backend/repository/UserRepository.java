@@ -11,4 +11,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEmailContainingIgnoreCase(String email);
     User findFirstByEmailIgnoreCase(String email);
     User findFirstByOauthId(String oauthId);
+    List<User> findByFavorites_Id(Long productId);
 }
