@@ -38,7 +38,7 @@ public class UserController {
         List<User> byName = userRepository.findByNameContainingIgnoreCase(q);
         List<User> byEmail = userRepository.findByEmailContainingIgnoreCase(q);
 
-        // Duplikate sauber über ID vermeiden:
+        // Duplikate sauber über ID vermeiden
         Map<Long, User> merged = new LinkedHashMap<>();
         for (User u : byName) merged.put(u.getId(), u);
         for (User u : byEmail) merged.put(u.getId(), u);
@@ -51,7 +51,7 @@ public class UserController {
     public User updateUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @RequestBody User updated) {
         requireAdmin(jwt);
 
-        // ---- Backend Validierung ----
+        // Backend-Validierung
         String name = updated.getName() != null ? updated.getName().trim() : "";
         String email = updated.getEmail() != null ? updated.getEmail().trim() : "";
         String role = updated.getRole() != null ? updated.getRole().trim() : "";

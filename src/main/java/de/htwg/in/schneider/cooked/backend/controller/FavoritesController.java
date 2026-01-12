@@ -3,6 +3,7 @@ package de.htwg.in.schneider.cooked.backend.controller;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.User;
@@ -119,7 +121,7 @@ public class FavoritesController {
 
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
         User user = userRepository.findFirstByEmailIgnoreCase(email.trim());
         if (user != null) {

@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.Review;
@@ -73,6 +75,9 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<Review> createReview(@RequestBody Review review, HttpServletRequest request, @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
 
         Long productId = null;
         if (review != null && review.getProduct() != null) {
@@ -117,7 +122,7 @@ public class ReviewController {
         Review saved = reviewRepository.save(review);
         LOG.info("Created review with id {}", saved.getId());
 
-        // ✅ TRANSAKTION SPEICHERN (CREATE REVIEW)
+        // TRANSAKTION SPEICHERN (CREATE REVIEW)
         transactionService.log(
                 "CREATE",
                 "REVIEW",
@@ -132,6 +137,9 @@ public class ReviewController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteReview(@PathVariable Long id, HttpServletRequest request, @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
         LOG.info("Attempting to delete review with id {}", id);
 
         Review review = reviewRepository.findById(id).orElse(null);
@@ -146,7 +154,7 @@ public class ReviewController {
         reviewRepository.delete(review);
         LOG.info("Deleted review with id {}", id);
 
-        // ✅ TRANSAKTION SPEICHERN (DELETE REVIEW)
+        // TRANSAKTION SPEICHERN (DELETE REVIEW)
         transactionService.log(
                 "DELETE",
                 "REVIEW",
@@ -158,6 +166,7 @@ public class ReviewController {
 
         return ResponseEntity.noContent().build();
     }
+
     private String extractEmail(Jwt jwt) {
         if (jwt == null) {
             return null;

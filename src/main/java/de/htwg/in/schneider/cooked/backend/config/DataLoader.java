@@ -19,7 +19,7 @@ import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @Configuration
-@Profile("!test")
+@Profile({ "local", "dev" })
 public class DataLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
@@ -90,7 +90,7 @@ public class DataLoader {
                         "Hackfleisch anbraten.\n" +
                         "Tomatenmark unterrühren.\n" +
                         "Tomaten und Brühe hinzugeben.\n" +
-                        "Sauce 20–30 Minuten köcheln lassen.\n" +
+                        "Sauce 20-30 Minuten köcheln lassen.\n" +
                         "Spaghetti al dente kochen.\n" +
                         "Mit Parmesan servieren.");
         recipe2.setCategories(List.of(Category.ITALIAN));
@@ -103,7 +103,7 @@ public class DataLoader {
         recipe3.setDescription(
                 "Kartoffeln in Spalten schneiden.\n" +
                         "Mit Öl und Gewürzen mischen.\n" +
-                        "35–40 Minuten im Ofen backen.\n" +
+                        "35-40 Minuten im Ofen backen.\n" +
                         "Gurke hobeln und salzen.\n" +
                         "Mit Joghurt, Dill und Zitronensaft vermengen.\n" +
                         "Zusammen servieren.");
@@ -149,4 +149,3 @@ public class DataLoader {
         LOGGER.info("Rezepte und Bewertungen erfolgreich geladen.");
     }
 }
-

@@ -37,7 +37,7 @@ public class MeController {
 
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
 
         User u = userRepository.findFirstByEmailIgnoreCase(email.trim());
@@ -69,7 +69,7 @@ public class MeController {
 
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
 
         User u = userRepository.findFirstByEmailIgnoreCase(email.trim());
