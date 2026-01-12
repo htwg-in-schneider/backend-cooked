@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Ingredient;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 import de.htwg.in.schneider.cooked.backend.model.User;
@@ -38,6 +40,9 @@ public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Autowired
     private TransactionService transactionService;
@@ -142,6 +147,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Object> deleteProduct(
             @PathVariable Long id,
             @AuthenticationPrincipal Jwt jwt) {
@@ -154,6 +160,8 @@ public class ProductController {
         if (!canManage(product, jwt)) {
             return ResponseEntity.status(403).build();
         }
+        removeFromFavorites(product);
+        reviewRepository.deleteAll(reviewRepository.findByProductId(product.getId()));
         productRepository.delete(product);
 
         transactionService.log(
@@ -226,8 +234,30 @@ public class ProductController {
     }
 
     private boolean isAdmin(Jwt jwt) {
+        if (hasAdminRole(jwt)) {
+            return true;
+        }
         User u = loadUser(jwt);
         return u != null && u.getRole() != null && "ADMIN".equalsIgnoreCase(u.getRole());
+    }
+
+    private boolean hasAdminRole(Jwt jwt) {
+        if (jwt == null) {
+            return false;
+        }
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            roles = jwt.getClaimAsStringList("roles");
+        }
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private User loadUser(Jwt jwt) {
@@ -344,5 +374,21 @@ public class ProductController {
         if (!hasStepText) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
         }
+    }
+
+    private void removeFromFavorites(Product product) {
+        if (product == null || product.getId() == null) {
+            return;
+        }
+        List<User> users = userRepository.findByFavorites_Id(product.getId());
+        if (users == null || users.isEmpty()) {
+            return;
+        }
+        for (User user : users) {
+            if (user.getFavorites() != null) {
+                user.getFavorites().removeIf(fav -> product.getId().equals(fav.getId()));
+            }
+        }
+        userRepository.saveAll(users);
     }
 }

@@ -50,8 +50,15 @@ public class MeController {
             return userRepository.save(created);
         }
 
+        boolean promoteToAdmin = hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()));
+        if (promoteToAdmin) {
+            u.setRole("ADMIN");
+        }
         if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
+            return userRepository.save(u);
+        }
+        if (promoteToAdmin) {
             return userRepository.save(u);
         }
         return u;
@@ -81,6 +88,9 @@ public class MeController {
         } else if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
         }
+        if (hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()))) {
+            u.setRole("ADMIN");
+        }
         return saveUpdated(u, req);
     }
 
@@ -109,6 +119,22 @@ public class MeController {
             }
         }
         return "USER";
+    }
+
+    private boolean hasAdminRole(Jwt jwt) {
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            roles = jwt.getClaimAsStringList("roles");
+        }
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String extractEmail(Jwt jwt) {
