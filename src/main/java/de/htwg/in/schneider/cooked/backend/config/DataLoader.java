@@ -21,7 +21,7 @@ import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @Configuration
-@Profile({ "local", "dev" })
+@Profile({ "local", "dev", "prod" })
 public class DataLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
