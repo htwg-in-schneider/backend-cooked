@@ -24,10 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Ingredient;
-import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
 import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
 import de.htwg.in.schneider.cooked.backend.repository.MealPlanEntryRepository;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ShoppingItemCheckRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
@@ -36,12 +36,12 @@ import de.htwg.in.schneider.cooked.backend.model.User;
 
 @RestController
 @RequestMapping({"/api/recipes", "/api/recipe", "/api/products", "/api/product"})
-public class ProductController {
+public class RecipeController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RecipeController.class);
 
     @Autowired
-    private ProductRepository productRepository;
+    private RecipeRepository productRepository;
 
     @Autowired
     private ReviewRepository reviewRepository;
@@ -59,11 +59,11 @@ public class ProductController {
     private ShoppingItemCheckRepository shoppingItemCheckRepository;
 
     @GetMapping
-    public List<Product> getProducts(
+    public List<Recipe> getProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category) {
 
-        List<Product> base = (name != null && !name.isBlank())
+        List<Recipe> base = (name != null && !name.isBlank())
                 ? productRepository.findByTitleContainingIgnoreCase(name)
                 : productRepository.findAll();
 
@@ -78,7 +78,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product createProduct(@RequestBody Product product, @AuthenticationPrincipal Jwt jwt) {
+    public Recipe createProduct(@RequestBody Recipe product, @AuthenticationPrincipal Jwt jwt) {
         if (product.getId() != null) {
             product.setId(null);
         }
@@ -96,7 +96,7 @@ public class ProductController {
         normalizeProduct(product);
         validateProduct(product);
 
-        Product newProduct = productRepository.save(product);
+        Recipe newProduct = productRepository.save(product);
 
         transactionService.log(
                 "CREATE",
@@ -112,17 +112,17 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<Recipe> updateProduct(
             @PathVariable Long id,
-            @RequestBody Product productDetails,
+            @RequestBody Recipe productDetails,
             @AuthenticationPrincipal Jwt jwt) {
 
-        Optional<Product> opt = productRepository.findById(id);
+        Optional<Recipe> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Product product = opt.get();
+        Recipe product = opt.get();
         if (!canManage(product, jwt)) {
             return ResponseEntity.status(403).build();
         }
@@ -143,7 +143,7 @@ public class ProductController {
         normalizeProduct(product);
         validateProduct(product);
 
-        Product updatedProduct = productRepository.save(product);
+        Recipe updatedProduct = productRepository.save(product);
 
         transactionService.log(
                 "UPDATE",
@@ -163,12 +163,12 @@ public class ProductController {
     public ResponseEntity<Object> deleteProduct(
             @PathVariable Long id,
             @AuthenticationPrincipal Jwt jwt) {
-        Optional<Product> opt = productRepository.findById(id);
+        Optional<Recipe> opt = productRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Product product = opt.get();
+        Recipe product = opt.get();
         if (!canManage(product, jwt)) {
             return ResponseEntity.status(403).build();
         }
@@ -192,14 +192,14 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        Optional<Product> opt = productRepository.findById(id);
+    public ResponseEntity<Recipe> getProductById(@PathVariable Long id) {
+        Optional<Recipe> opt = productRepository.findById(id);
         return opt.map(ResponseEntity::ok)
                   .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/mine")
-    public List<Product> getMyProducts(@AuthenticationPrincipal Jwt jwt) {
+    public List<Recipe> getMyProducts(@AuthenticationPrincipal Jwt jwt) {
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
             return List.of();
@@ -232,7 +232,7 @@ public class ProductController {
         return name;
     }
 
-    private boolean canManage(Product product, Jwt jwt) {
+    private boolean canManage(Recipe product, Jwt jwt) {
         if (jwt == null || product == null) {
             return false;
         }
@@ -281,7 +281,7 @@ public class ProductController {
         }
     }
 
-    private void normalizeProduct(Product product) {
+    private void normalizeProduct(Recipe product) {
         if (product.getTitle() != null) {
             product.setTitle(product.getTitle().trim());
         }
@@ -316,7 +316,7 @@ public class ProductController {
         }
     }
 
-    private void validateProduct(Product product) {
+    private void validateProduct(Recipe product) {
         if (product == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produktdaten fehlen");
         }
@@ -375,7 +375,7 @@ public class ProductController {
         }
     }
 
-    private void removeFromFavorites(Product product) {
+    private void removeFromFavorites(Recipe product) {
         if (product == null || product.getId() == null) {
             return;
         }

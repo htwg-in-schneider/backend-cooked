@@ -13,10 +13,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "product")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-public class Product {
+public class Recipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -58,7 +60,7 @@ public class Product {
     @JsonIgnore
     private List<Review> reviews;
 
-    public Product() {
+    public Recipe() {
     }
 
     public Long getId() {

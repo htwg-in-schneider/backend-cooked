@@ -28,7 +28,7 @@ public class MealPlanEntry {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
-    private Product product;
+    private Recipe product;
 
     @Enumerated(EnumType.STRING)
     private Weekday weekday;
@@ -54,11 +54,11 @@ public class MealPlanEntry {
         this.user = user;
     }
 
-    public Product getProduct() {
+    public Recipe getProduct() {
         return product;
     }
 
-    public void setProduct(Product product) {
+    public void setProduct(Recipe product) {
         this.product = product;
     }
 

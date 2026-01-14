@@ -35,7 +35,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     @JsonIgnore
-    private List<Product> favorites = new ArrayList<>();
+    private List<Recipe> favorites = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -85,11 +85,11 @@ public class User {
         this.avatarUrl = avatarUrl;
     }
 
-    public List<Product> getFavorites() {
+    public List<Recipe> getFavorites() {
         return favorites;
     }
 
-    public void setFavorites(List<Product> favorites) {
+    public void setFavorites(List<Recipe> favorites) {
         this.favorites = favorites;
     }
    
