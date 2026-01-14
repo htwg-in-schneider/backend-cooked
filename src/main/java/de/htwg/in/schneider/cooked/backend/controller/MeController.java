@@ -1,5 +1,7 @@
 package de.htwg.in.schneider.cooked.backend.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.htwg.in.schneider.cooked.backend.model.Review;
 import de.htwg.in.schneider.cooked.backend.model.User;
+import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @RestController
@@ -18,9 +22,11 @@ import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 public class MeController {
 
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
-    public MeController(UserRepository userRepository) {
+    public MeController(UserRepository userRepository, ReviewRepository reviewRepository) {
         this.userRepository = userRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @GetMapping
@@ -144,20 +150,9 @@ public class MeController {
                 u.setEmail(email);
             }
 
-<<<<<<< HEAD
-            // ✅ AVATAR: darf auch leer sein (zum Löschen)
-            if (req.avatarUrl != null) {
-                String avatar = req.avatarUrl.trim();
-                if (avatar.isEmpty()) {
-                    u.setAvatarUrl(null); // <-- WICHTIG: damit wieder Default-Icon kommt
-                } else {
-                    u.setAvatarUrl(avatar);
-                }
-=======
             if (req.avatarUrl != null) {
                 String trimmed = req.avatarUrl.trim();
                 u.setAvatarUrl(trimmed.isEmpty() ? null : trimmed);
->>>>>>> 2a3c741 (verbesserungen)
             }
 
             // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
@@ -170,10 +165,35 @@ public class MeController {
             }
         }
 
-        return userRepository.save(u);
+        User saved = userRepository.save(u);
+        syncReviewProfile(saved);
+        return saved;
     }
 
-    private static class UpdateRequest {
+    private void syncReviewProfile(User user) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+        List<Review> reviews = reviewRepository.findByUserId(user.getId());
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        String name = user.getName();
+        String avatarUrl = user.getAvatarUrl();
+        String email = user.getEmail();
+        for (Review review : reviews) {
+            if (name != null && !name.isBlank()) {
+                review.setUserName(name);
+            }
+            review.setAvatarUrl(avatarUrl);
+            if (email != null && !email.isBlank()) {
+                review.setUserEmail(email);
+            }
+        }
+        reviewRepository.saveAll(reviews);
+    }
+
+    private static final class UpdateRequest {
         public String name;
         public String email;
         public String avatarUrl;

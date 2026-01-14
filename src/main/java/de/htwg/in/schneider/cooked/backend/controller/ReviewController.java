@@ -95,6 +95,24 @@ public class ReviewController {
             return ResponseEntity.badRequest().build();
         }
 
+        User reviewer = resolveUser(jwt);
+        if (reviewer != null) {
+            review.setUserId(reviewer.getId());
+            String name = reviewer.getName();
+            if (name != null && !name.isBlank()) {
+                review.setUserName(name.trim());
+            }
+            String email = reviewer.getEmail();
+            if (email != null && !email.isBlank()) {
+                review.setUserEmail(email.trim());
+            }
+        } else {
+            String jwtEmail = extractEmail(jwt);
+            if (jwtEmail != null && !jwtEmail.isBlank()) {
+                review.setUserEmail(jwtEmail.trim());
+            }
+        }
+
         int stars = review.getStars();
         if (stars < 1 || stars > 5) {
             LOG.warn("Review stars out of bounds: {}", stars);
@@ -124,7 +142,8 @@ public class ReviewController {
 
         // Review speichern
         review.setProduct(product);
-        review.setAvatarUrl(resolveAvatarUrl(jwt));
+        String avatarUrl = resolveAvatarUrl(jwt, reviewer);
+        review.setAvatarUrl(avatarUrl);
         Review saved = reviewRepository.save(review);
         LOG.info("Created review with id {}", saved.getId());
 
@@ -148,10 +167,34 @@ public class ReviewController {
         }
         LOG.info("Attempting to delete review with id {}", id);
 
+        User actor = resolveUser(jwt);
+        if (actor == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
+        boolean isAdmin = actor.getRole() != null && actor.getRole().equalsIgnoreCase("ADMIN");
+
         Review review = reviewRepository.findById(id).orElse(null);
         if (review == null) {
             LOG.warn("Review not found for deletion: {}", id);
             return ResponseEntity.notFound().build();
+        }
+
+        if (!isAdmin) {
+            boolean isOwner = review.getUserId() != null && review.getUserId().equals(actor.getId());
+            if (!isOwner) {
+                String actorEmail = actor.getEmail() == null ? "" : actor.getEmail().trim();
+                String jwtEmail = extractEmail(jwt);
+                if (jwtEmail != null && !jwtEmail.isBlank()) {
+                    actorEmail = jwtEmail.trim();
+                }
+                String reviewEmail = review.getUserEmail() == null ? "" : review.getUserEmail().trim();
+                if (!actorEmail.isEmpty() && actorEmail.equalsIgnoreCase(reviewEmail)) {
+                    isOwner = true;
+                }
+            }
+            if (!isOwner) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
+            }
         }
 
         Long productId = (review.getProduct() != null) ? review.getProduct().getId() : null;
@@ -218,5 +261,31 @@ public class ReviewController {
         }
         String picture = jwt.getClaimAsString("picture");
         return (picture == null || picture.isBlank()) ? null : picture.trim();
+    }
+
+    private User resolveUser(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
+    }
+
+    private String resolveAvatarUrl(Jwt jwt, User reviewer) {
+        if (reviewer != null) {
+            String url = reviewer.getAvatarUrl();
+            return (url == null || url.isBlank()) ? null : url.trim();
+        }
+        return resolveAvatarUrl(jwt);
     }
 }
