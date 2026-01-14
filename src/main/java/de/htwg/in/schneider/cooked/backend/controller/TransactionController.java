@@ -52,32 +52,10 @@ public class TransactionController {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
-        if (hasAdminRole(jwt)) {
-            return;
-        }
         User u = loadUser(jwt);
         if (u == null || u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
         }
-    }
-
-    private boolean hasAdminRole(Jwt jwt) {
-        if (jwt == null) {
-            return false;
-        }
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles == null) {
-            roles = jwt.getClaimAsStringList("roles");
-        }
-        if (roles == null) {
-            return false;
-        }
-        for (String role : roles) {
-            if ("ADMIN".equalsIgnoreCase(role)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private User loadUser(Jwt jwt) {

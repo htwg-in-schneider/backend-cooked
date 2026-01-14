@@ -156,14 +156,6 @@ public class FavoritesController {
     }
 
     private String resolveRole(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles != null) {
-            for (String role : roles) {
-                if ("ADMIN".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role)) {
-                    return "ADMIN";
-                }
-            }
-        }
         return "USER";
     }
 

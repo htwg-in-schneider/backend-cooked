@@ -27,6 +27,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/favorites/**").authenticated()
                 .requestMatchers("/api/users/**").authenticated()
                 .requestMatchers("/api/transactions/**").authenticated()
+                .requestMatchers("/api/mealplan/**").authenticated()
+                .requestMatchers("/api/shopping/**").authenticated()
                 .requestMatchers(HttpMethod.GET,
                         "/api/recipes/mine",
                         "/api/recipe/mine",
