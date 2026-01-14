@@ -47,7 +47,7 @@ public class Product {
     @jakarta.persistence.Column(name = "created_by_email", length = 320)
     private String createdByEmail;
 
-    // Statt Preis haben wir jetzt Minuten
+    // Minuten statt Preis
     private Integer prepTimeMinutes;
 
     private Integer servings;
