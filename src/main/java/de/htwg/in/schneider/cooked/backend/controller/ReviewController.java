@@ -20,8 +20,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.Review;
+import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
+import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,6 +41,9 @@ public class ReviewController {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private String getActorEmail(HttpServletRequest request, Jwt jwt) {
         String email = extractEmail(jwt);
@@ -119,6 +124,7 @@ public class ReviewController {
 
         // Review speichern
         review.setProduct(product);
+        review.setAvatarUrl(resolveAvatarUrl(jwt));
         Review saved = reviewRepository.save(review);
         LOG.info("Created review with id {}", saved.getId());
 
@@ -190,5 +196,27 @@ public class ReviewController {
             return extractEmail(jwt);
         }
         return name;
+    }
+
+    private String resolveAvatarUrl(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null && byOauth.getAvatarUrl() != null && !byOauth.getAvatarUrl().isBlank()) {
+                return byOauth.getAvatarUrl().trim();
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email != null && !email.isBlank()) {
+            User byEmail = userRepository.findFirstByEmailIgnoreCase(email.trim());
+            if (byEmail != null && byEmail.getAvatarUrl() != null && !byEmail.getAvatarUrl().isBlank()) {
+                return byEmail.getAvatarUrl().trim();
+            }
+        }
+        String picture = jwt.getClaimAsString("picture");
+        return (picture == null || picture.isBlank()) ? null : picture.trim();
     }
 }

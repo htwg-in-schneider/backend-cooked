@@ -144,6 +144,7 @@ public class MeController {
                 u.setEmail(email);
             }
 
+<<<<<<< HEAD
             // ✅ AVATAR: darf auch leer sein (zum Löschen)
             if (req.avatarUrl != null) {
                 String avatar = req.avatarUrl.trim();
@@ -152,6 +153,11 @@ public class MeController {
                 } else {
                     u.setAvatarUrl(avatar);
                 }
+=======
+            if (req.avatarUrl != null) {
+                String trimmed = req.avatarUrl.trim();
+                u.setAvatarUrl(trimmed.isEmpty() ? null : trimmed);
+>>>>>>> 2a3c741 (verbesserungen)
             }
 
             // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
