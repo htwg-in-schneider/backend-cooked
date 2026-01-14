@@ -155,6 +155,7 @@ public class MeController {
 
     private User saveUpdated(User u, UpdateRequest req) {
         if (req != null) {
+            // NAME
             if (req.name != null && !req.name.trim().isEmpty()) {
                 String name = req.name.trim();
                 if (name.length() < 2) {
@@ -163,6 +164,7 @@ public class MeController {
                 u.setName(name);
             }
 
+            // EMAIL
             if (req.email != null && !req.email.trim().isEmpty()) {
                 String email = req.email.trim();
                 if (!email.matches("^\\S+@\\S+\\.\\S+$")) {
@@ -175,8 +177,14 @@ public class MeController {
                 u.setEmail(email);
             }
 
-            if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
-                u.setAvatarUrl(req.avatarUrl.trim());
+            // ✅ AVATAR: darf auch leer sein (zum Löschen)
+            if (req.avatarUrl != null) {
+                String avatar = req.avatarUrl.trim();
+                if (avatar.isEmpty()) {
+                    u.setAvatarUrl(null); // <-- WICHTIG: damit wieder Default-Icon kommt
+                } else {
+                    u.setAvatarUrl(avatar);
+                }
             }
 
             // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
