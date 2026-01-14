@@ -1,7 +1,7 @@
 package de.htwg.in.schneider.cooked.backend.model;
 
 public enum Category {
-    // Unsere Rezept-Kategorien
+    // Rezept-Kategorien
     ITALIAN("Italienisch"),
     ASIAN("Asiatisch"),
     VEGETARIAN("Vegetarisch"),

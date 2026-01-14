@@ -155,7 +155,7 @@ public class MeController {
                 u.setAvatarUrl(trimmed.isEmpty() ? null : trimmed);
             }
 
-            // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
+            // BIO: darf auch leer sein (zum Löschen), aber max 300
             if (req.bio != null) {
                 String bio = req.bio.trim();
                 if (bio.length() > 300) {
