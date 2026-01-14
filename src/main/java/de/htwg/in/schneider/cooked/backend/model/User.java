@@ -24,6 +24,10 @@ public class User {
     @Column(name = "avatar_url", length = 1000)
     private String avatarUrl;
 
+    @Column(length = 300)
+    private String bio;
+
+
     @ManyToMany
     @JoinTable(
             name = "user_favorites",
@@ -88,4 +92,13 @@ public class User {
     public void setFavorites(List<Product> favorites) {
         this.favorites = favorites;
     }
+   
+    public String getBio() {
+    return bio;
+    }
+
+    public void setBio(String bio) {
+    this.bio = bio;
+    }
+
 }

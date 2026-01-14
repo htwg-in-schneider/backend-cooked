@@ -16,7 +16,7 @@ import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @RestController
-@RequestMapping({"/api/me", "/api/profile"})
+@RequestMapping({ "/api/me", "/api/profile" })
 public class MeController {
 
     private final UserRepository userRepository;
@@ -81,6 +81,7 @@ public class MeController {
         } else if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
         }
+
         return saveUpdated(u, req);
     }
 
@@ -134,6 +135,7 @@ public class MeController {
             if (req.name != null && !req.name.trim().isEmpty()) {
                 u.setName(req.name.trim());
             }
+
             if (req.email != null && !req.email.trim().isEmpty()) {
                 String email = req.email.trim();
                 if (!email.matches("^\\S+@\\S+\\.\\S+$")) {
@@ -145,8 +147,18 @@ public class MeController {
                 }
                 u.setEmail(email);
             }
+
             if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
                 u.setAvatarUrl(req.avatarUrl.trim());
+            }
+
+            // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
+            if (req.bio != null) {
+                String bio = req.bio.trim();
+                if (bio.length() > 300) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bio darf maximal 300 Zeichen haben");
+                }
+                u.setBio(bio);
             }
         }
 
@@ -157,5 +169,6 @@ public class MeController {
         public String name;
         public String email;
         public String avatarUrl;
+        public String bio;
     }
 }
