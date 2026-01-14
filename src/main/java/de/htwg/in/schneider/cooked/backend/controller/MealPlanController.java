@@ -65,15 +65,24 @@ public class MealPlanController {
         Recipe product = productRepository.findById(req.productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rezept nicht gefunden"));
 
-        if (mealPlanRepository.findByUserAndWeekdayAndProduct_Id(user, weekday, product.getId()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Rezept ist an diesem Tag bereits eingeplant");
+        MealPlanEntry existing = mealPlanRepository
+                .findByUserAndWeekdayAndProduct_Id(user, weekday, product.getId())
+                .orElse(null);
+        int normalized = normalizeServings(req.servings, product.getServings());
+        if (existing != null) {
+            int nextServings = (existing.getServings() != null ? existing.getServings() : 0) + normalized;
+            if (nextServings <= 0 || nextServings > 1000) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Portionen sind ungültig");
+            }
+            existing.setServings(nextServings);
+            return MealPlanEntryDto.from(mealPlanRepository.save(existing));
         }
 
         MealPlanEntry entry = new MealPlanEntry();
         entry.setUser(user);
         entry.setProduct(product);
         entry.setWeekday(weekday);
-        entry.setServings(normalizeServings(req.servings, product.getServings()));
+        entry.setServings(normalized);
 
         return MealPlanEntryDto.from(mealPlanRepository.save(entry));
     }
