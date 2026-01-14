@@ -10,7 +10,7 @@ RUN mvn clean package -DskipTests
 # Stage 2: Run the application
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/saitenweise-backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/*-SNAPSHOT.jar app.jar
 
 # Expose the application port
 EXPOSE 8081

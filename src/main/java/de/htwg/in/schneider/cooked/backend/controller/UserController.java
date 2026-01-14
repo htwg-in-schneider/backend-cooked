@@ -38,7 +38,7 @@ public class UserController {
         List<User> byName = userRepository.findByNameContainingIgnoreCase(q);
         List<User> byEmail = userRepository.findByEmailContainingIgnoreCase(q);
 
-        // Duplikate sauber über ID vermeiden:
+        // Duplikate sauber über ID vermeiden
         Map<Long, User> merged = new LinkedHashMap<>();
         for (User u : byName) merged.put(u.getId(), u);
         for (User u : byEmail) merged.put(u.getId(), u);
@@ -51,7 +51,7 @@ public class UserController {
     public User updateUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @RequestBody User updated) {
         requireAdmin(jwt);
 
-        // ---- Backend Validierung ----
+        // Backend-Validierung
         String name = updated.getName() != null ? updated.getName().trim() : "";
         String email = updated.getEmail() != null ? updated.getEmail().trim() : "";
         String role = updated.getRole() != null ? updated.getRole().trim() : "";
@@ -89,14 +89,45 @@ public class UserController {
         return userRepository.save(existing);
     }
 
+    // DELETE /api/users/{id}
+    @DeleteMapping("/{id}")
+    public void deleteUser(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        requireAdmin(jwt);
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden"));
+        userRepository.delete(existing);
+    }
+
     private void requireAdmin(Jwt jwt) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
+        if (hasAdminRole(jwt)) {
+            return;
         }
         User u = loadUser(jwt);
         if (u == null || u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
         }
+    }
+
+    private boolean hasAdminRole(Jwt jwt) {
+        if (jwt == null) {
+            return false;
+        }
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            roles = jwt.getClaimAsStringList("roles");
+        }
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private User loadUser(Jwt jwt) {

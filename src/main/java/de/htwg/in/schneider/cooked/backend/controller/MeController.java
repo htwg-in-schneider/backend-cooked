@@ -37,7 +37,7 @@ public class MeController {
 
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
 
         User u = userRepository.findFirstByEmailIgnoreCase(email.trim());
@@ -50,8 +50,15 @@ public class MeController {
             return userRepository.save(created);
         }
 
+        boolean promoteToAdmin = hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()));
+        if (promoteToAdmin) {
+            u.setRole("ADMIN");
+        }
         if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
+            return userRepository.save(u);
+        }
+        if (promoteToAdmin) {
             return userRepository.save(u);
         }
         return u;
@@ -69,7 +76,7 @@ public class MeController {
 
         String email = extractEmail(jwt);
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("No email claim in token. Add 'email' or custom claim.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
         }
 
         User u = userRepository.findFirstByEmailIgnoreCase(email.trim());
@@ -112,6 +119,22 @@ public class MeController {
         return "USER";
     }
 
+    private boolean hasAdminRole(Jwt jwt) {
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            roles = jwt.getClaimAsStringList("roles");
+        }
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private String extractEmail(Jwt jwt) {
         if (jwt == null) {
             return null;
@@ -133,7 +156,11 @@ public class MeController {
     private User saveUpdated(User u, UpdateRequest req) {
         if (req != null) {
             if (req.name != null && !req.name.trim().isEmpty()) {
-                u.setName(req.name.trim());
+                String name = req.name.trim();
+                if (name.length() < 2) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu kurz (mind. 2 Zeichen)");
+                }
+                u.setName(name);
             }
 
             if (req.email != null && !req.email.trim().isEmpty()) {

@@ -4,11 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,19 +18,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.config.TestSecurityConfig;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Integration tests for ProductController with /api/recipes.
  */
 @SpringBootTest
-@Profile("test")
+@ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 public class ProductControllerTest {
 
         private MockMvc mockMvc;
@@ -39,7 +44,9 @@ public class ProductControllerTest {
 
         @BeforeEach
         public void setUp(WebApplicationContext context) {
-                this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+                this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                                .apply(springSecurity())
+                                .build();
                 productRepository.deleteAll();
         }
 
@@ -162,10 +169,14 @@ public class ProductControllerTest {
                 String payload = """
                                 {"title":"Tiramisu","description":"Leckeres Dessert.",
                                  "categories":["DESSERT"],"prepTimeMinutes":30,
-                                 "imageUrl":"https://example.com/tiramisu.jpg"}
+                                 "imageUrl":"https://example.com/tiramisu.jpg",
+                                 "ingredients":[{"name":"Mascarpone","amount":"250g"}],
+                                 "steps":[{"text":"Alles verrühren."}]}
                                 """;
 
                 MvcResult result = mockMvc.perform(post("/api/recipes")
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(payload))
                                 .andExpect(status().isOk())
@@ -189,15 +200,20 @@ public class ProductControllerTest {
                 p.setCategories(List.of(Category.VEGETARIAN));
                 p.setPrepTimeMinutes(1);
                 p.setImageUrl("https://example.com/old.jpg");
+                p.setCreatedByEmail("test@example.com");
                 Long id = productRepository.save(p).getId();
 
                 String payload = """
                                 {"title":"Neu","description":"Besser.",
                                  "categories":["ASIAN"],"prepTimeMinutes":55,
-                                 "imageUrl":"https://example.com/new.jpg"}
+                                 "imageUrl":"https://example.com/new.jpg",
+                                 "ingredients":[{"name":"Reis","amount":"200g"}],
+                                 "steps":[{"text":"Kochen."}]}
                                 """;
 
                 mockMvc.perform(put("/api/recipes/" + id)
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(payload))
                                 .andExpect(status().isOk())
@@ -217,9 +233,12 @@ public class ProductControllerTest {
                 p.setCategories(List.of(Category.ITALIAN));
                 p.setPrepTimeMinutes(10);
                 p.setImageUrl("https://example.com/d.jpg");
+                p.setCreatedByEmail("test@example.com");
                 Long id = productRepository.save(p).getId();
 
-                mockMvc.perform(delete("/api/recipes/" + id))
+                mockMvc.perform(delete("/api/recipes/" + id)
+                                .with(jwt().jwt(jwt -> jwt.claim("email", "test@example.com")
+                                                .claim("name", "Test User"))))
                                 .andExpect(status().isNoContent());
 
                 assertFalse(productRepository.findById(id).isPresent());

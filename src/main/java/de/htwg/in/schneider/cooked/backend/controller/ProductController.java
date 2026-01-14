@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,10 +19,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.htwg.in.schneider.cooked.backend.model.Category;
+import de.htwg.in.schneider.cooked.backend.model.Ingredient;
 import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 import de.htwg.in.schneider.cooked.backend.model.User;
@@ -34,6 +40,9 @@ public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Autowired
     private TransactionService transactionService;
@@ -72,6 +81,9 @@ public class ProductController {
         if (product.getCreatedByEmail() == null) {
             product.setCreatedByEmail(extractEmail(jwt));
         }
+
+        normalizeProduct(product);
+        validateProduct(product);
 
         Product newProduct = productRepository.save(product);
 
@@ -116,6 +128,9 @@ public class ProductController {
         product.setIngredients(productDetails.getIngredients());
         product.setSteps(productDetails.getSteps());
 
+        normalizeProduct(product);
+        validateProduct(product);
+
         Product updatedProduct = productRepository.save(product);
 
         transactionService.log(
@@ -132,6 +147,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Object> deleteProduct(
             @PathVariable Long id,
             @AuthenticationPrincipal Jwt jwt) {
@@ -144,6 +160,8 @@ public class ProductController {
         if (!canManage(product, jwt)) {
             return ResponseEntity.status(403).build();
         }
+        removeFromFavorites(product);
+        reviewRepository.deleteAll(reviewRepository.findByProductId(product.getId()));
         productRepository.delete(product);
 
         transactionService.log(
@@ -216,8 +234,30 @@ public class ProductController {
     }
 
     private boolean isAdmin(Jwt jwt) {
+        if (hasAdminRole(jwt)) {
+            return true;
+        }
         User u = loadUser(jwt);
         return u != null && u.getRole() != null && "ADMIN".equalsIgnoreCase(u.getRole());
+    }
+
+    private boolean hasAdminRole(Jwt jwt) {
+        if (jwt == null) {
+            return false;
+        }
+        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
+        if (roles == null) {
+            roles = jwt.getClaimAsStringList("roles");
+        }
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private User loadUser(Jwt jwt) {
@@ -247,5 +287,108 @@ public class ProductController {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private void normalizeProduct(Product product) {
+        if (product.getTitle() != null) {
+            product.setTitle(product.getTitle().trim());
+        }
+        if (product.getDescription() != null) {
+            product.setDescription(product.getDescription().trim());
+        }
+        if (product.getInstructions() != null) {
+            product.setInstructions(product.getInstructions().trim());
+        }
+        if (product.getImageUrl() != null) {
+            product.setImageUrl(product.getImageUrl().trim());
+        }
+        if (product.getIngredients() != null) {
+            for (Ingredient ing : product.getIngredients()) {
+                if (ing.getName() != null) {
+                    ing.setName(ing.getName().trim());
+                }
+                if (ing.getAmount() != null) {
+                    ing.setAmount(ing.getAmount().trim());
+                }
+            }
+        }
+        if (product.getSteps() != null) {
+            for (RecipeStep step : product.getSteps()) {
+                if (step.getText() != null) {
+                    step.setText(step.getText().trim());
+                }
+            }
+        }
+    }
+
+    private void validateProduct(Product product) {
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produktdaten fehlen");
+        }
+        String title = product.getTitle() != null ? product.getTitle().trim() : "";
+        if (title.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel darf nicht leer sein");
+        }
+        if (title.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel ist zu kurz (mind. 3 Zeichen)");
+        }
+        if (product.getCategories() == null || product.getCategories().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Kategorie ist erforderlich");
+        }
+        Integer minutes = product.getPrepTimeMinutes();
+        if (minutes == null || minutes <= 0 || minutes > 9999) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zubereitungszeit ist ungültig");
+        }
+
+        List<Ingredient> ingredients = product.getIngredients();
+        if (ingredients == null || ingredients.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
+        }
+        boolean hasIngredientName = false;
+        for (Ingredient ing : ingredients) {
+            String name = ing != null && ing.getName() != null ? ing.getName().trim() : "";
+            String amount = ing != null && ing.getAmount() != null ? ing.getAmount().trim() : "";
+            if (!name.isEmpty()) {
+                hasIngredientName = true;
+            }
+            if (name.isEmpty() && !amount.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zutat benötigt einen Namen");
+            }
+        }
+        if (!hasIngredientName) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
+        }
+
+        List<RecipeStep> steps = product.getSteps();
+        if (steps == null || steps.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
+        }
+        boolean hasStepText = false;
+        for (RecipeStep step : steps) {
+            String text = step != null && step.getText() != null ? step.getText().trim() : "";
+            if (!text.isEmpty()) {
+                hasStepText = true;
+                break;
+            }
+        }
+        if (!hasStepText) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
+        }
+    }
+
+    private void removeFromFavorites(Product product) {
+        if (product == null || product.getId() == null) {
+            return;
+        }
+        List<User> users = userRepository.findByFavorites_Id(product.getId());
+        if (users == null || users.isEmpty()) {
+            return;
+        }
+        for (User user : users) {
+            if (user.getFavorites() != null) {
+                user.getFavorites().removeIf(fav -> product.getId().equals(fav.getId()));
+            }
+        }
+        userRepository.saveAll(users);
     }
 }
