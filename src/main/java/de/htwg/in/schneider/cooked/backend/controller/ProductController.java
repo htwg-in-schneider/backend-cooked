@@ -26,8 +26,10 @@ import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Ingredient;
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
+import de.htwg.in.schneider.cooked.backend.repository.MealPlanEntryRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
+import de.htwg.in.schneider.cooked.backend.repository.ShoppingItemCheckRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 import de.htwg.in.schneider.cooked.backend.model.User;
@@ -49,6 +51,12 @@ public class ProductController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MealPlanEntryRepository mealPlanEntryRepository;
+
+    @Autowired
+    private ShoppingItemCheckRepository shoppingItemCheckRepository;
 
     @GetMapping
     public List<Product> getProducts(
@@ -80,6 +88,9 @@ public class ProductController {
         }
         if (product.getCreatedByEmail() == null) {
             product.setCreatedByEmail(extractEmail(jwt));
+        }
+        if (product.getServings() == null) {
+            product.setServings(1);
         }
 
         normalizeProduct(product);
@@ -125,6 +136,7 @@ public class ProductController {
             product.setInstructions(productDetails.getDescription());
         }
         product.setPrepTimeMinutes(productDetails.getPrepTimeMinutes());
+        product.setServings(productDetails.getServings());
         product.setIngredients(productDetails.getIngredients());
         product.setSteps(productDetails.getSteps());
 
@@ -162,6 +174,8 @@ public class ProductController {
         }
         removeFromFavorites(product);
         reviewRepository.deleteAll(reviewRepository.findByProductId(product.getId()));
+        mealPlanEntryRepository.deleteByProductId(product.getId());
+        shoppingItemCheckRepository.deleteByProductId(product.getId());
         productRepository.delete(product);
 
         transactionService.log(
@@ -234,30 +248,8 @@ public class ProductController {
     }
 
     private boolean isAdmin(Jwt jwt) {
-        if (hasAdminRole(jwt)) {
-            return true;
-        }
         User u = loadUser(jwt);
         return u != null && u.getRole() != null && "ADMIN".equalsIgnoreCase(u.getRole());
-    }
-
-    private boolean hasAdminRole(Jwt jwt) {
-        if (jwt == null) {
-            return false;
-        }
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles == null) {
-            roles = jwt.getClaimAsStringList("roles");
-        }
-        if (roles == null) {
-            return false;
-        }
-        for (String role : roles) {
-            if ("ADMIN".equalsIgnoreCase(role)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private User loadUser(Jwt jwt) {
@@ -317,6 +309,9 @@ public class ProductController {
                 if (step.getText() != null) {
                     step.setText(step.getText().trim());
                 }
+                if (step.getTitle() != null) {
+                    step.setTitle(step.getTitle().trim());
+                }
             }
         }
     }
@@ -338,6 +333,10 @@ public class ProductController {
         Integer minutes = product.getPrepTimeMinutes();
         if (minutes == null || minutes <= 0 || minutes > 9999) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zubereitungszeit ist ungültig");
+        }
+        Integer servings = product.getServings();
+        if (servings == null || servings <= 0 || servings > 1000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Portionen sind ungültig");
         }
 
         List<Ingredient> ingredients = product.getIngredients();

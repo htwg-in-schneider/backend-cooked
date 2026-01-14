@@ -15,6 +15,9 @@ public class Review {
     private int stars; // 1 to 5
     private String text;
     private String userName;
+    private String avatarUrl;
+    private Long userId;
+    private String userEmail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
@@ -52,6 +55,30 @@ public class Review {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public Product getProduct() {

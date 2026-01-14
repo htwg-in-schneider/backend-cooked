@@ -20,8 +20,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.Product;
 import de.htwg.in.schneider.cooked.backend.model.Review;
+import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
+import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,6 +41,9 @@ public class ReviewController {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private String getActorEmail(HttpServletRequest request, Jwt jwt) {
         String email = extractEmail(jwt);
@@ -90,6 +95,24 @@ public class ReviewController {
             return ResponseEntity.badRequest().build();
         }
 
+        User reviewer = resolveUser(jwt);
+        if (reviewer != null) {
+            review.setUserId(reviewer.getId());
+            String name = reviewer.getName();
+            if (name != null && !name.isBlank()) {
+                review.setUserName(name.trim());
+            }
+            String email = reviewer.getEmail();
+            if (email != null && !email.isBlank()) {
+                review.setUserEmail(email.trim());
+            }
+        } else {
+            String jwtEmail = extractEmail(jwt);
+            if (jwtEmail != null && !jwtEmail.isBlank()) {
+                review.setUserEmail(jwtEmail.trim());
+            }
+        }
+
         int stars = review.getStars();
         if (stars < 1 || stars > 5) {
             LOG.warn("Review stars out of bounds: {}", stars);
@@ -119,6 +142,8 @@ public class ReviewController {
 
         // Review speichern
         review.setProduct(product);
+        String avatarUrl = resolveAvatarUrl(jwt, reviewer);
+        review.setAvatarUrl(avatarUrl);
         Review saved = reviewRepository.save(review);
         LOG.info("Created review with id {}", saved.getId());
 
@@ -142,10 +167,34 @@ public class ReviewController {
         }
         LOG.info("Attempting to delete review with id {}", id);
 
+        User actor = resolveUser(jwt);
+        if (actor == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht eingeloggt");
+        }
+        boolean isAdmin = actor.getRole() != null && actor.getRole().equalsIgnoreCase("ADMIN");
+
         Review review = reviewRepository.findById(id).orElse(null);
         if (review == null) {
             LOG.warn("Review not found for deletion: {}", id);
             return ResponseEntity.notFound().build();
+        }
+
+        if (!isAdmin) {
+            boolean isOwner = review.getUserId() != null && review.getUserId().equals(actor.getId());
+            if (!isOwner) {
+                String actorEmail = actor.getEmail() == null ? "" : actor.getEmail().trim();
+                String jwtEmail = extractEmail(jwt);
+                if (jwtEmail != null && !jwtEmail.isBlank()) {
+                    actorEmail = jwtEmail.trim();
+                }
+                String reviewEmail = review.getUserEmail() == null ? "" : review.getUserEmail().trim();
+                if (!actorEmail.isEmpty() && actorEmail.equalsIgnoreCase(reviewEmail)) {
+                    isOwner = true;
+                }
+            }
+            if (!isOwner) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung");
+            }
         }
 
         Long productId = (review.getProduct() != null) ? review.getProduct().getId() : null;
@@ -190,5 +239,53 @@ public class ReviewController {
             return extractEmail(jwt);
         }
         return name;
+    }
+
+    private String resolveAvatarUrl(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null && byOauth.getAvatarUrl() != null && !byOauth.getAvatarUrl().isBlank()) {
+                return byOauth.getAvatarUrl().trim();
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email != null && !email.isBlank()) {
+            User byEmail = userRepository.findFirstByEmailIgnoreCase(email.trim());
+            if (byEmail != null && byEmail.getAvatarUrl() != null && !byEmail.getAvatarUrl().isBlank()) {
+                return byEmail.getAvatarUrl().trim();
+            }
+        }
+        String picture = jwt.getClaimAsString("picture");
+        return (picture == null || picture.isBlank()) ? null : picture.trim();
+    }
+
+    private User resolveUser(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        String oauthId = jwt.getSubject();
+        if (oauthId != null && !oauthId.isBlank()) {
+            User byOauth = userRepository.findFirstByOauthId(oauthId);
+            if (byOauth != null) {
+                return byOauth;
+            }
+        }
+        String email = extractEmail(jwt);
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return userRepository.findFirstByEmailIgnoreCase(email.trim());
+    }
+
+    private String resolveAvatarUrl(Jwt jwt, User reviewer) {
+        if (reviewer != null) {
+            String url = reviewer.getAvatarUrl();
+            return (url == null || url.isBlank()) ? null : url.trim();
+        }
+        return resolveAvatarUrl(jwt);
     }
 }

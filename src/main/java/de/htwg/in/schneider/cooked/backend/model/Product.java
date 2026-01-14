@@ -50,6 +50,8 @@ public class Product {
     // Statt Preis haben wir jetzt Minuten
     private Integer prepTimeMinutes;
 
+    private Integer servings;
+
     private String imageUrl;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -129,6 +131,14 @@ public class Product {
 
     public void setPrepTimeMinutes(Integer prepTimeMinutes) {
         this.prepTimeMinutes = prepTimeMinutes;
+    }
+
+    public Integer getServings() {
+        return servings;
+    }
+
+    public void setServings(Integer servings) {
+        this.servings = servings;
     }
 
     public String getImageUrl() {

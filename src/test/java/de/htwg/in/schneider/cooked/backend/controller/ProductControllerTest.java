@@ -168,7 +168,7 @@ public class ProductControllerTest {
         public void testCreateProduct() throws Exception {
                 String payload = """
                                 {"title":"Tiramisu","description":"Leckeres Dessert.",
-                                 "categories":["DESSERT"],"prepTimeMinutes":30,
+                                 "categories":["DESSERT"],"prepTimeMinutes":30,"servings":4,
                                  "imageUrl":"https://example.com/tiramisu.jpg",
                                  "ingredients":[{"name":"Mascarpone","amount":"250g"}],
                                  "steps":[{"text":"Alles verrühren."}]}
@@ -205,7 +205,7 @@ public class ProductControllerTest {
 
                 String payload = """
                                 {"title":"Neu","description":"Besser.",
-                                 "categories":["ASIAN"],"prepTimeMinutes":55,
+                                 "categories":["ASIAN"],"prepTimeMinutes":55,"servings":2,
                                  "imageUrl":"https://example.com/new.jpg",
                                  "ingredients":[{"name":"Reis","amount":"200g"}],
                                  "steps":[{"text":"Kochen."}]}

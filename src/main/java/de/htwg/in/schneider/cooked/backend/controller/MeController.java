@@ -12,17 +12,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.htwg.in.schneider.cooked.backend.model.Review;
 import de.htwg.in.schneider.cooked.backend.model.User;
+import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @RestController
-@RequestMapping({"/api/me", "/api/profile"})
+@RequestMapping({ "/api/me", "/api/profile" })
 public class MeController {
 
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
-    public MeController(UserRepository userRepository) {
+    public MeController(UserRepository userRepository, ReviewRepository reviewRepository) {
         this.userRepository = userRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @GetMapping
@@ -50,15 +54,8 @@ public class MeController {
             return userRepository.save(created);
         }
 
-        boolean promoteToAdmin = hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()));
-        if (promoteToAdmin) {
-            u.setRole("ADMIN");
-        }
         if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
-            return userRepository.save(u);
-        }
-        if (promoteToAdmin) {
             return userRepository.save(u);
         }
         return u;
@@ -88,9 +85,7 @@ public class MeController {
         } else if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
         }
-        if (hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()))) {
-            u.setRole("ADMIN");
-        }
+
         return saveUpdated(u, req);
     }
 
@@ -110,31 +105,7 @@ public class MeController {
     }
 
     private String resolveRole(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles != null) {
-            for (String role : roles) {
-                if ("ADMIN".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role)) {
-                    return "ADMIN";
-                }
-            }
-        }
         return "USER";
-    }
-
-    private boolean hasAdminRole(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles == null) {
-            roles = jwt.getClaimAsStringList("roles");
-        }
-        if (roles == null) {
-            return false;
-        }
-        for (String role : roles) {
-            if ("ADMIN".equalsIgnoreCase(role)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private String extractEmail(Jwt jwt) {
@@ -157,6 +128,7 @@ public class MeController {
 
     private User saveUpdated(User u, UpdateRequest req) {
         if (req != null) {
+            // NAME
             if (req.name != null && !req.name.trim().isEmpty()) {
                 String name = req.name.trim();
                 if (name.length() < 2) {
@@ -164,6 +136,8 @@ public class MeController {
                 }
                 u.setName(name);
             }
+
+            // EMAIL
             if (req.email != null && !req.email.trim().isEmpty()) {
                 String email = req.email.trim();
                 if (!email.matches("^\\S+@\\S+\\.\\S+$")) {
@@ -175,17 +149,54 @@ public class MeController {
                 }
                 u.setEmail(email);
             }
-            if (req.avatarUrl != null && !req.avatarUrl.trim().isEmpty()) {
-                u.setAvatarUrl(req.avatarUrl.trim());
+
+            if (req.avatarUrl != null) {
+                String trimmed = req.avatarUrl.trim();
+                u.setAvatarUrl(trimmed.isEmpty() ? null : trimmed);
+            }
+
+            // ✅ BIO: darf auch leer sein (zum Löschen), aber max 300
+            if (req.bio != null) {
+                String bio = req.bio.trim();
+                if (bio.length() > 300) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bio darf maximal 300 Zeichen haben");
+                }
+                u.setBio(bio);
             }
         }
 
-        return userRepository.save(u);
+        User saved = userRepository.save(u);
+        syncReviewProfile(saved);
+        return saved;
     }
 
-    private static class UpdateRequest {
+    private void syncReviewProfile(User user) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+        List<Review> reviews = reviewRepository.findByUserId(user.getId());
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        String name = user.getName();
+        String avatarUrl = user.getAvatarUrl();
+        String email = user.getEmail();
+        for (Review review : reviews) {
+            if (name != null && !name.isBlank()) {
+                review.setUserName(name);
+            }
+            review.setAvatarUrl(avatarUrl);
+            if (email != null && !email.isBlank()) {
+                review.setUserEmail(email);
+            }
+        }
+        reviewRepository.saveAll(reviews);
+    }
+
+    private static final class UpdateRequest {
         public String name;
         public String email;
         public String avatarUrl;
+        public String bio;
     }
 }

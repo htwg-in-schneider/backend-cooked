@@ -27,12 +27,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/favorites/**").authenticated()
                 .requestMatchers("/api/users/**").authenticated()
                 .requestMatchers("/api/transactions/**").authenticated()
+                .requestMatchers("/api/mealplan/**").authenticated()
+                .requestMatchers("/api/shopping/**").authenticated()
                 .requestMatchers(HttpMethod.GET,
                         "/api/recipes/mine",
                         "/api/recipe/mine",
                         "/api/products/mine",
                         "/api/product/mine").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/review/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/review/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/product/**", "/api/products/**", "/api/recipe/**", "/api/recipes/**").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/product/**", "/api/products/**", "/api/recipe/**", "/api/recipes/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/product/**", "/api/products/**", "/api/recipe/**", "/api/recipes/**").authenticated()
@@ -44,7 +47,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/review/**").permitAll()
-                .requestMatchers("/api/**").permitAll()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
