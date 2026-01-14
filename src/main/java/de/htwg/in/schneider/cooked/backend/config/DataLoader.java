@@ -78,6 +78,7 @@ public class DataLoader {
                 "Hähnchen anbraten, Sauce kochen, Nudeln garen und alles zusammenführen.");
         recipe1.setCategories(List.of(Category.ASIAN));
         recipe1.setPrepTimeMinutes(40);
+        recipe1.setServings(2);
         recipe1.setImageUrl("/images/essen1.webp");
 
         Ingredient ramenChicken = new Ingredient("Hähnchenbrust", "300 g");
@@ -109,19 +110,26 @@ public class DataLoader {
                 ramenSesame,
                 ramenEggs));
 
-        recipe1.setSteps(List.of(
-                new RecipeStep("Hähnchen in Streifen schneiden, salzen und in Öl goldbraun anbraten.",
-                        List.of(ramenChicken, ramenOil, ramenSalt)),
-                new RecipeStep("Knoblauch und Chiliflocken kurz mitrösten.",
-                        List.of(ramenGarlic, ramenChili)),
-                new RecipeStep("Brühe, Sahne, Sojasauce und Parmesan einrühren und 5-7 Minuten köcheln.",
-                        List.of(ramenBroth, ramenCream, ramenSoy, ramenParmesan)),
-                new RecipeStep("Ramen-Nudeln nach Packung garen und abtropfen lassen.",
-                        List.of(ramenNoodles)),
-                new RecipeStep("Nudeln und Hähnchen in die Sauce geben und kurz ziehen lassen.",
-                        List.of(ramenNoodles, ramenChicken)),
-                new RecipeStep("Mit Frühlingszwiebeln, Ei und Sesam garnieren.",
-                        List.of(ramenOnion, ramenEggs, ramenSesame))));
+        RecipeStep r1s1 = new RecipeStep("Hähnchen in Streifen schneiden, salzen und in Öl goldbraun anbraten.",
+                List.of(ramenChicken, ramenOil, ramenSalt));
+        r1s1.setTitle("Hähnchen anbraten");
+        RecipeStep r1s2 = new RecipeStep("Knoblauch und Chiliflocken kurz mitrösten.",
+                List.of(ramenGarlic, ramenChili));
+        r1s2.setTitle("Aromen rösten");
+        RecipeStep r1s3 = new RecipeStep("Brühe, Sahne, Sojasauce und Parmesan einrühren und 5-7 Minuten köcheln.",
+                List.of(ramenBroth, ramenCream, ramenSoy, ramenParmesan));
+        r1s3.setTitle("Sauce kochen");
+        RecipeStep r1s4 = new RecipeStep("Ramen-Nudeln nach Packung garen und abtropfen lassen.",
+                List.of(ramenNoodles));
+        r1s4.setTitle("Nudeln garen");
+        RecipeStep r1s5 = new RecipeStep("Nudeln und Hähnchen in die Sauce geben und kurz ziehen lassen.",
+                List.of(ramenNoodles, ramenChicken));
+        r1s5.setTitle("Alles vereinen");
+        RecipeStep r1s6 = new RecipeStep("Mit Frühlingszwiebeln, Ei und Sesam garnieren.",
+                List.of(ramenOnion, ramenEggs, ramenSesame));
+        r1s6.setTitle("Anrichten");
+
+        recipe1.setSteps(List.of(r1s1, r1s2, r1s3, r1s4, r1s5, r1s6));
 
         // --- REZEPT 2: Spaghetti (Italian) ---
         Product recipe2 = new Product();
@@ -130,6 +138,7 @@ public class DataLoader {
         recipe2.setInstructions("Sauce langsam köcheln lassen und mit Spaghetti servieren.");
         recipe2.setCategories(List.of(Category.ITALIAN));
         recipe2.setPrepTimeMinutes(60);
+        recipe2.setServings(4);
         recipe2.setImageUrl("/images/essen3.webp");
 
         Ingredient boloSpaghetti = new Ingredient("Spaghetti", "250 g");
@@ -163,19 +172,26 @@ public class DataLoader {
                 boloPepper,
                 boloParmesan));
 
-        recipe2.setSteps(List.of(
-                new RecipeStep("Zwiebel, Knoblauch, Karotte und Sellerie fein würfeln.",
-                        List.of(boloOnion, boloGarlic, boloCarrot, boloCelery)),
-                new RecipeStep("Öl erhitzen, Gemüse anschwitzen und Hackfleisch bräunen.",
-                        List.of(boloOil, boloMeat, boloOnion, boloGarlic, boloCarrot, boloCelery)),
-                new RecipeStep("Tomatenmark kurz anrösten, Tomaten und Brühe zugeben, würzen.",
-                        List.of(boloTomatoPaste, boloTomatoes, boloBroth, boloOregano, boloSalt, boloPepper)),
-                new RecipeStep("Sauce 20-30 Minuten bei kleiner Hitze köcheln lassen.",
-                        List.of(boloTomatoes, boloBroth)),
-                new RecipeStep("Spaghetti in Salzwasser al dente kochen.",
-                        List.of(boloSpaghetti, boloSalt)),
-                new RecipeStep("Mit Parmesan servieren.",
-                        List.of(boloParmesan))));
+        RecipeStep r2s1 = new RecipeStep("Zwiebel, Knoblauch, Karotte und Sellerie fein würfeln.",
+                List.of(boloOnion, boloGarlic, boloCarrot, boloCelery));
+        r2s1.setTitle("Gemüse vorbereiten");
+        RecipeStep r2s2 = new RecipeStep("Öl erhitzen, Gemüse anschwitzen und Hackfleisch bräunen.",
+                List.of(boloOil, boloMeat, boloOnion, boloGarlic, boloCarrot, boloCelery));
+        r2s2.setTitle("Anbraten");
+        RecipeStep r2s3 = new RecipeStep("Tomatenmark kurz anrösten, Tomaten und Brühe zugeben, würzen.",
+                List.of(boloTomatoPaste, boloTomatoes, boloBroth, boloOregano, boloSalt, boloPepper));
+        r2s3.setTitle("Sauce starten");
+        RecipeStep r2s4 = new RecipeStep("Sauce 20-30 Minuten bei kleiner Hitze köcheln lassen.",
+                List.of(boloTomatoes, boloBroth));
+        r2s4.setTitle("Köcheln lassen");
+        RecipeStep r2s5 = new RecipeStep("Spaghetti in Salzwasser al dente kochen.",
+                List.of(boloSpaghetti, boloSalt));
+        r2s5.setTitle("Spaghetti kochen");
+        RecipeStep r2s6 = new RecipeStep("Mit Parmesan servieren.",
+                List.of(boloParmesan));
+        r2s6.setTitle("Servieren");
+
+        recipe2.setSteps(List.of(r2s1, r2s2, r2s3, r2s4, r2s5, r2s6));
 
         // --- REZEPT 3: Wedges (Vegetarian) ---
         Product recipe3 = new Product();
@@ -184,6 +200,7 @@ public class DataLoader {
         recipe3.setInstructions("Wedges backen und den Salat währenddessen anrühren.");
         recipe3.setCategories(List.of(Category.VEGETARIAN));
         recipe3.setPrepTimeMinutes(45);
+        recipe3.setServings(2);
         recipe3.setImageUrl("/images/essen2.webp");
 
         Ingredient wedgePotatoes = new Ingredient("Kartoffeln", "600 g");
@@ -211,18 +228,25 @@ public class DataLoader {
                 saladLemon,
                 saladSugar));
 
-        recipe3.setSteps(List.of(
-                new RecipeStep("Backofen auf 200 C vorheizen.", List.of()),
-                new RecipeStep("Kartoffeln in Spalten schneiden und mit Öl und Gewürzen mischen.",
-                        List.of(wedgePotatoes, wedgeOil, wedgePaprika, wedgeGarlic, wedgeSalt, wedgePepper)),
-                new RecipeStep("Wedges 35-40 Minuten backen, einmal wenden.",
-                        List.of(wedgePotatoes)),
-                new RecipeStep("Gurke dünn hobeln, salzen und 10 Minuten ziehen lassen.",
-                        List.of(saladCucumber, wedgeSalt)),
-                new RecipeStep("Joghurt mit Dill, Zitronensaft und Zucker verrühren.",
-                        List.of(saladYogurt, saladDill, saladLemon, saladSugar)),
-                new RecipeStep("Gurke ausdrücken, mit dem Dressing mischen und mit den Wedges servieren.",
-                        List.of(saladCucumber, saladYogurt))));
+        RecipeStep r3s1 = new RecipeStep("Backofen auf 200 C vorheizen.", List.of());
+        r3s1.setTitle("Ofen vorheizen");
+        RecipeStep r3s2 = new RecipeStep("Kartoffeln in Spalten schneiden und mit Öl und Gewürzen mischen.",
+                List.of(wedgePotatoes, wedgeOil, wedgePaprika, wedgeGarlic, wedgeSalt, wedgePepper));
+        r3s2.setTitle("Wedges würzen");
+        RecipeStep r3s3 = new RecipeStep("Wedges 35-40 Minuten backen, einmal wenden.",
+                List.of(wedgePotatoes));
+        r3s3.setTitle("Backen");
+        RecipeStep r3s4 = new RecipeStep("Gurke dünn hobeln, salzen und 10 Minuten ziehen lassen.",
+                List.of(saladCucumber, wedgeSalt));
+        r3s4.setTitle("Gurke vorbereiten");
+        RecipeStep r3s5 = new RecipeStep("Joghurt mit Dill, Zitronensaft und Zucker verrühren.",
+                List.of(saladYogurt, saladDill, saladLemon, saladSugar));
+        r3s5.setTitle("Dressing rühren");
+        RecipeStep r3s6 = new RecipeStep("Gurke ausdrücken, mit dem Dressing mischen und mit den Wedges servieren.",
+                List.of(saladCucumber, saladYogurt));
+        r3s6.setTitle("Anrichten");
+
+        recipe3.setSteps(List.of(r3s1, r3s2, r3s3, r3s4, r3s5, r3s6));
 
         // Rezepte speichern
         repository.saveAll(Arrays.asList(recipe1, recipe2, recipe3));

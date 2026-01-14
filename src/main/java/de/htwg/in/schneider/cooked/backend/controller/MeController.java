@@ -1,7 +1,5 @@
 package de.htwg.in.schneider.cooked.backend.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -50,15 +48,8 @@ public class MeController {
             return userRepository.save(created);
         }
 
-        boolean promoteToAdmin = hasAdminRole(jwt) && (u.getRole() == null || !"ADMIN".equalsIgnoreCase(u.getRole()));
-        if (promoteToAdmin) {
-            u.setRole("ADMIN");
-        }
         if (u.getOauthId() == null && oauthId != null && !oauthId.isBlank()) {
             u.setOauthId(oauthId);
-            return userRepository.save(u);
-        }
-        if (promoteToAdmin) {
             return userRepository.save(u);
         }
         return u;
@@ -108,31 +99,7 @@ public class MeController {
     }
 
     private String resolveRole(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles != null) {
-            for (String role : roles) {
-                if ("ADMIN".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role)) {
-                    return "ADMIN";
-                }
-            }
-        }
         return "USER";
-    }
-
-    private boolean hasAdminRole(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("https://cooked.api/roles");
-        if (roles == null) {
-            roles = jwt.getClaimAsStringList("roles");
-        }
-        if (roles == null) {
-            return false;
-        }
-        for (String role : roles) {
-            if ("ADMIN".equalsIgnoreCase(role)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private String extractEmail(Jwt jwt) {

@@ -6,6 +6,7 @@ import java.util.List;
 public class RecipeStep {
 
     private String text;
+    private String title;
     private List<Ingredient> ingredients = new ArrayList<>();
 
     public RecipeStep() {
@@ -22,6 +23,14 @@ public class RecipeStep {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public List<Ingredient> getIngredients() {
