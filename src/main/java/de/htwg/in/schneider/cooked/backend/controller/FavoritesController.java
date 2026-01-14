@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
 import de.htwg.in.schneider.cooked.backend.model.User;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 
@@ -27,10 +27,10 @@ import de.htwg.in.schneider.cooked.backend.service.TransactionService;
 public class FavoritesController {
 
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
+    private final RecipeRepository productRepository;
     private final TransactionService transactionService;
 
-    public FavoritesController(UserRepository userRepository, ProductRepository productRepository,
+    public FavoritesController(UserRepository userRepository, RecipeRepository productRepository,
             TransactionService transactionService) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
@@ -39,7 +39,7 @@ public class FavoritesController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public List<Product> getFavorites(@AuthenticationPrincipal Jwt jwt) {
+    public List<Recipe> getFavorites(@AuthenticationPrincipal Jwt jwt) {
         User user = loadUser(jwt);
         return user.getFavorites();
     }
@@ -49,7 +49,7 @@ public class FavoritesController {
     public List<Long> getFavoriteIds(@AuthenticationPrincipal Jwt jwt) {
         User user = loadUser(jwt);
         return user.getFavorites().stream()
-                .map(Product::getId)
+                .map(Recipe::getId)
                 .toList();
     }
 
@@ -59,11 +59,11 @@ public class FavoritesController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long productId) {
         User user = loadUser(jwt);
-        Optional<Product> productOpt = productRepository.findById(productId);
+        Optional<Recipe> productOpt = productRepository.findById(productId);
         if (productOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Product product = productOpt.get();
+        Recipe product = productOpt.get();
         boolean added = false;
         if (user.getFavorites().stream().noneMatch(p -> p.getId().equals(productId))) {
             user.getFavorites().add(product);
@@ -80,7 +80,7 @@ public class FavoritesController {
                     "Favorit hinzugefuegt: " + product.getTitle()
             );
         }
-        return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
+        return ResponseEntity.ok(user.getFavorites().stream().map(Recipe::getId).toList());
     }
 
     @DeleteMapping("/{productId}")
@@ -89,15 +89,15 @@ public class FavoritesController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long productId) {
         User user = loadUser(jwt);
-        Optional<Product> productOpt = productRepository.findById(productId);
+        Optional<Recipe> productOpt = productRepository.findById(productId);
         boolean removed = user.getFavorites()
                 .removeIf(p -> p.getId().equals(productId));
         if (!removed) {
-            return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
+            return ResponseEntity.ok(user.getFavorites().stream().map(Recipe::getId).toList());
         }
         userRepository.save(user);
         if (productOpt.isPresent()) {
-            Product product = productOpt.get();
+            Recipe product = productOpt.get();
             transactionService.log(
                     "FAVORITE_REMOVE",
                     "PRODUCT",
@@ -107,7 +107,7 @@ public class FavoritesController {
                     "Favorit entfernt: " + product.getTitle()
             );
         }
-        return ResponseEntity.ok(user.getFavorites().stream().map(Product::getId).toList());
+        return ResponseEntity.ok(user.getFavorites().stream().map(Recipe::getId).toList());
     }
 
     private User loadUser(Jwt jwt) {

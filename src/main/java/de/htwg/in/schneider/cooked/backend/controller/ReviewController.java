@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
 import de.htwg.in.schneider.cooked.backend.model.Review;
 import de.htwg.in.schneider.cooked.backend.model.User;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 import de.htwg.in.schneider.cooked.backend.service.TransactionService;
@@ -37,7 +37,7 @@ public class ReviewController {
     private ReviewRepository reviewRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private RecipeRepository productRepository;
 
     @Autowired
     private TransactionService transactionService;
@@ -134,9 +134,9 @@ public class ReviewController {
             return ResponseEntity.badRequest().build();
         }
 
-        Product product = productRepository.findById(review.getProduct().getId()).orElse(null);
+        Recipe product = productRepository.findById(review.getProduct().getId()).orElse(null);
         if (product == null) {
-            LOG.warn("Product not found for review: {}", review.getProduct().getId());
+            LOG.warn("Recipe not found for review: {}", review.getProduct().getId());
             return ResponseEntity.badRequest().build();
         }
 
@@ -154,7 +154,7 @@ public class ReviewController {
                 saved.getId(),
                 getActorName(jwt, saved.getUserName()),
                 getActorEmail(request, jwt),
-                "Review erstellt: " + stars + " Sterne zu Product #" + product.getId()
+                "Review erstellt: " + stars + " Sterne zu Recipe #" + product.getId()
         );
 
         return ResponseEntity.ok(saved);
@@ -210,7 +210,7 @@ public class ReviewController {
                 id,
                 userName,
                 getActorEmail(request, jwt),
-                "Review gelöscht (gehörte zu Product #" + productId + ")"
+                "Review gelöscht (gehörte zu Recipe #" + productId + ")"
         );
 
         return ResponseEntity.noContent().build();

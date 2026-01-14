@@ -26,7 +26,7 @@ public class Transaction {
     @Column(nullable = false)
     private String entityType;
 
-    // ID vom betroffenen Objekt (z.B. Product-ID)
+    // ID vom betroffenen Objekt (z.B. Recipe-ID)
     @Column(nullable = false)
     private Long entityId;
 

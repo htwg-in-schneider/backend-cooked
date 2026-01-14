@@ -10,7 +10,7 @@ import de.htwg.in.schneider.cooked.backend.config.TestSecurityConfig;
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-class SaitenweiseBackendApplicationTests {
+class CookedBackendApplicationTests {
 
 	@Test
 	void contextLoads() {

@@ -22,7 +22,7 @@ public class Review {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private Product product;
+    private Recipe product;
 
     // Getters and setters
     public Long getId() {
@@ -81,11 +81,11 @@ public class Review {
         this.userEmail = userEmail;
     }
 
-    public Product getProduct() {
+    public Recipe getProduct() {
         return product;
     }
 
-    public void setProduct(Product product) {
+    public void setProduct(Recipe product) {
         this.product = product;
     }
 }

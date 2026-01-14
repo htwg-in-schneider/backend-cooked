@@ -19,11 +19,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.htwg.in.schneider.cooked.backend.model.MealPlanEntry;
 import de.htwg.in.schneider.cooked.backend.model.Ingredient;
-import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
 import de.htwg.in.schneider.cooked.backend.model.User;
 import de.htwg.in.schneider.cooked.backend.model.Weekday;
 import de.htwg.in.schneider.cooked.backend.repository.MealPlanEntryRepository;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
 @RestController
@@ -32,12 +32,12 @@ public class MealPlanController {
 
     private final MealPlanEntryRepository mealPlanRepository;
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
+    private final RecipeRepository productRepository;
 
     public MealPlanController(
             MealPlanEntryRepository mealPlanRepository,
             UserRepository userRepository,
-            ProductRepository productRepository) {
+            RecipeRepository productRepository) {
         this.mealPlanRepository = mealPlanRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
@@ -62,7 +62,7 @@ public class MealPlanController {
         if (weekday == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wochentag fehlt");
         }
-        Product product = productRepository.findById(req.productId)
+        Recipe product = productRepository.findById(req.productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rezept nicht gefunden"));
 
         if (mealPlanRepository.findByUserAndWeekdayAndProduct_Id(user, weekday, product.getId()).isPresent()) {
@@ -203,7 +203,7 @@ public class MealPlanController {
         public String imageUrl;
         public List<Ingredient> ingredients;
 
-        public static ProductDto from(Product product) {
+        public static ProductDto from(Recipe product) {
             ProductDto dto = new ProductDto();
             dto.id = product.getId();
             dto.title = product.getTitle();

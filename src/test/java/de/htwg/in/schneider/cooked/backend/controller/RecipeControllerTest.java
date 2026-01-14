@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.htwg.in.schneider.cooked.backend.model.Category;
-import de.htwg.in.schneider.cooked.backend.model.Product;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.config.TestSecurityConfig;
 
 import java.util.List;
@@ -30,17 +30,17 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for ProductController with /api/recipes.
+ * Integration tests for RecipeController with /api/recipes.
  */
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-public class ProductControllerTest {
+public class RecipeControllerTest {
 
         private MockMvc mockMvc;
 
         @Autowired
-        private ProductRepository productRepository;
+        private RecipeRepository productRepository;
 
         @BeforeEach
         public void setUp(WebApplicationContext context) {
@@ -52,7 +52,7 @@ public class ProductControllerTest {
 
         @Test
         public void testGetProducts() throws Exception {
-                Product product = new Product();
+                Recipe product = new Recipe();
                 product.setTitle("Spaghetti Carbonara");
                 product.setDescription("Ein italienischer Klassiker mit Ei und Speck.");
                 product.setCategories(List.of(Category.ITALIAN));
@@ -72,7 +72,7 @@ public class ProductControllerTest {
 
         @Test
         public void testGetProductsByName() throws Exception {
-                Product p1 = new Product();
+                Recipe p1 = new Recipe();
                 p1.setTitle("Leckere Pizza");
                 p1.setDescription("Tomate Mozzarella.");
                 p1.setCategories(List.of(Category.ITALIAN));
@@ -80,7 +80,7 @@ public class ProductControllerTest {
                 p1.setImageUrl("https://example.com/pizza.jpg");
                 productRepository.save(p1);
 
-                Product p2 = new Product();
+                Recipe p2 = new Recipe();
                 p2.setTitle("Leckere Suppe");
                 p2.setDescription("Kürbissuppe.");
                 p2.setCategories(List.of(Category.VEGETARIAN));
@@ -97,7 +97,7 @@ public class ProductControllerTest {
 
         @Test
         public void testGetProductsByCategory() throws Exception {
-                Product p1 = new Product();
+                Recipe p1 = new Recipe();
                 p1.setTitle("Pizza Salami");
                 p1.setDescription("Mit viel Käse.");
                 p1.setCategories(List.of(Category.ITALIAN));
@@ -105,7 +105,7 @@ public class ProductControllerTest {
                 p1.setImageUrl("https://example.com/salami.jpg");
                 productRepository.save(p1);
 
-                Product p2 = new Product();
+                Recipe p2 = new Recipe();
                 p2.setTitle("Pad Thai");
                 p2.setDescription("Nudeln aus Thailand.");
                 p2.setCategories(List.of(Category.ASIAN));
@@ -121,7 +121,7 @@ public class ProductControllerTest {
 
         @Test
         public void testGetProductsByNameAndCategory() throws Exception {
-                Product p1 = new Product();
+                Recipe p1 = new Recipe();
                 p1.setTitle("Classic Burger");
                 p1.setDescription("Rindfleisch Burger.");
                 p1.setCategories(List.of(Category.AMERICAN));
@@ -129,7 +129,7 @@ public class ProductControllerTest {
                 p1.setImageUrl("https://example.com/burger.jpg");
                 productRepository.save(p1);
 
-                Product p2 = new Product();
+                Recipe p2 = new Recipe();
                 p2.setTitle("Modern Burger");
                 p2.setDescription("Veganer Burger.");
                 p2.setCategories(List.of(Category.AMERICAN));
@@ -147,7 +147,7 @@ public class ProductControllerTest {
 
         @Test
         public void testGetProductById() throws Exception {
-                Product product = new Product();
+                Recipe product = new Recipe();
                 product.setTitle("Lasagne");
                 product.setDescription("Schicht für Schicht ein Gedicht.");
                 product.setCategories(List.of(Category.ITALIAN));
@@ -194,7 +194,7 @@ public class ProductControllerTest {
 
         @Test
         public void testUpdateProduct() throws Exception {
-                Product p = new Product();
+                Recipe p = new Recipe();
                 p.setTitle("Alt");
                 p.setDescription("Alt.");
                 p.setCategories(List.of(Category.VEGETARIAN));
@@ -220,14 +220,14 @@ public class ProductControllerTest {
                                 .andExpect(jsonPath("$.title").value("Neu"))
                                 .andExpect(jsonPath("$.categories[0]").value("ASIAN"));
 
-                Product updated = productRepository.findById(id).orElseThrow();
+                Recipe updated = productRepository.findById(id).orElseThrow();
                 assertEquals("Neu", updated.getTitle());
                 assertEquals(55, updated.getPrepTimeMinutes());
         }
 
         @Test
         public void testDeleteProduct() throws Exception {
-                Product p = new Product();
+                Recipe p = new Recipe();
                 p.setTitle("Delete");
                 p.setDescription("To delete.");
                 p.setCategories(List.of(Category.ITALIAN));

@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Profile;
 
 import de.htwg.in.schneider.cooked.backend.model.Category;
 import de.htwg.in.schneider.cooked.backend.model.Ingredient;
-import de.htwg.in.schneider.cooked.backend.model.Product;
+import de.htwg.in.schneider.cooked.backend.model.Recipe;
 import de.htwg.in.schneider.cooked.backend.model.RecipeStep;
 import de.htwg.in.schneider.cooked.backend.model.Review;
 import de.htwg.in.schneider.cooked.backend.model.User;
-import de.htwg.in.schneider.cooked.backend.repository.ProductRepository;
+import de.htwg.in.schneider.cooked.backend.repository.RecipeRepository;
 import de.htwg.in.schneider.cooked.backend.repository.ReviewRepository;
 import de.htwg.in.schneider.cooked.backend.repository.UserRepository;
 
@@ -28,7 +28,7 @@ public class DataLoader {
 
     @Bean
     public CommandLineRunner loadData(
-            ProductRepository repository,
+            RecipeRepository repository,
             ReviewRepository reviewRepository,
             UserRepository userRepository) {
 
@@ -69,9 +69,9 @@ public class DataLoader {
         LOGGER.info("Test-User erfolgreich geladen.");
     }
 
-    private void loadInitialData(ProductRepository repository, ReviewRepository reviewRepository) {
+    private void loadInitialData(RecipeRepository repository, ReviewRepository reviewRepository) {
 
-        Product recipe1 = new Product();
+        Recipe recipe1 = new Recipe();
         recipe1.setTitle("Marry Me Chicken Ramen");
         recipe1.setDescription("Cremige Ramen mit gebratenem Hähnchen und leichter Chili-Schärfe.");
         recipe1.setInstructions(
@@ -132,7 +132,7 @@ public class DataLoader {
         recipe1.setSteps(List.of(r1s1, r1s2, r1s3, r1s4, r1s5, r1s6));
 
         // --- REZEPT 2: Spaghetti (Italian) ---
-        Product recipe2 = new Product();
+        Recipe recipe2 = new Recipe();
         recipe2.setTitle("Spaghetti Bolognese");
         recipe2.setDescription("Klassische Bolognese mit Gemüse, Rinderhack und Parmesan.");
         recipe2.setInstructions("Sauce langsam köcheln lassen und mit Spaghetti servieren.");
@@ -194,7 +194,7 @@ public class DataLoader {
         recipe2.setSteps(List.of(r2s1, r2s2, r2s3, r2s4, r2s5, r2s6));
 
         // --- REZEPT 3: Wedges (Vegetarian) ---
-        Product recipe3 = new Product();
+        Recipe recipe3 = new Recipe();
         recipe3.setTitle("Kartoffelwedges mit Gurkensalat");
         recipe3.setDescription("Knusprige Ofenwedges mit frischem Gurkensalat.");
         recipe3.setInstructions("Wedges backen und den Salat währenddessen anrühren.");
