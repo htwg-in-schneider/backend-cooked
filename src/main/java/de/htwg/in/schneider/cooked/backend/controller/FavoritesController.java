@@ -77,7 +77,7 @@ public class FavoritesController {
                     product.getId(),
                     resolveName(jwt, extractEmail(jwt)),
                     extractEmail(jwt),
-                    "Favorit hinzugefuegt: " + product.getTitle()
+                    "Favorit hinzugefügt: " + product.getTitle()
             );
         }
         return ResponseEntity.ok(user.getFavorites().stream().map(Recipe::getId).toList());
