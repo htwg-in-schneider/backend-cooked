@@ -121,12 +121,26 @@ public class ReviewController {
 
         if (review.getUserName() == null || review.getUserName().trim().isEmpty()) {
             LOG.warn("Review userName missing");
-            return ResponseEntity.badRequest().build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name darf nicht leer sein");
+        }
+        String name = review.getUserName().trim();
+        if (name.length() < 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu kurz (mind. 2 Zeichen)");
+        }
+        if (name.length() > 80) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name ist zu lang (max. 80 Zeichen)");
         }
 
         if (review.getText() == null || review.getText().trim().isEmpty()) {
             LOG.warn("Review text missing");
-            return ResponseEntity.badRequest().build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Text darf nicht leer sein");
+        }
+        String text = review.getText().trim();
+        if (text.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Text ist zu kurz (mind. 3 Zeichen)");
+        }
+        if (text.length() > 1000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Text ist zu lang (max. 1000 Zeichen)");
         }
 
         if (review.getProduct() == null || review.getProduct().getId() == null) {

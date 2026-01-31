@@ -138,6 +138,7 @@ public class MealPlanController {
         mealPlanRepository.deleteByUser(user);
     }
 
+    // Fallback auf Rezept-Standard-Portionen, aber Grenzen serverseitig erzwingen
     private int normalizeServings(Integer servings, Integer fallback) {
         int base = fallback != null && fallback > 0 ? fallback : 1;
         if (servings == null) {
