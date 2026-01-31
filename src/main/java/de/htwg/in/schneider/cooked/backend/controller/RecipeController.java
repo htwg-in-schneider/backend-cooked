@@ -41,7 +41,7 @@ public class RecipeController {
     private static final Logger LOG = LoggerFactory.getLogger(RecipeController.class);
 
     @Autowired
-    private RecipeRepository productRepository;
+    private RecipeRepository recipeRepository;
 
     @Autowired
     private ReviewRepository reviewRepository;
@@ -64,8 +64,8 @@ public class RecipeController {
             @RequestParam(required = false) String category) {
 
         List<Recipe> base = (name != null && !name.isBlank())
-                ? productRepository.findByTitleContainingIgnoreCase(name)
-                : productRepository.findAll();
+                ? recipeRepository.findByTitleContainingIgnoreCase(name)
+                : recipeRepository.findAll();
 
         Category categoryEnum = parseCategory(category);
         if (categoryEnum == null) {
@@ -78,84 +78,84 @@ public class RecipeController {
     }
 
     @PostMapping
-    public Recipe createProduct(@RequestBody Recipe product, @AuthenticationPrincipal Jwt jwt) {
-        if (product.getId() != null) {
-            product.setId(null);
+    public Recipe createProduct(@RequestBody Recipe recipe, @AuthenticationPrincipal Jwt jwt) {
+        if (recipe.getId() != null) {
+            recipe.setId(null);
         }
 
-        if (product.getInstructions() == null && product.getDescription() != null) {
-            product.setInstructions(product.getDescription());
+        if (recipe.getInstructions() == null && recipe.getDescription() != null) {
+            recipe.setInstructions(recipe.getDescription());
         }
-        if (product.getCreatedByEmail() == null) {
-            product.setCreatedByEmail(extractEmail(jwt));
+        if (recipe.getCreatedByEmail() == null) {
+            recipe.setCreatedByEmail(extractEmail(jwt));
         }
-        if (product.getServings() == null) {
-            product.setServings(1);
+        if (recipe.getServings() == null) {
+            recipe.setServings(1);
         }
 
-        normalizeProduct(product);
-        validateProduct(product);
+        normalizeProduct(recipe);
+        validateProduct(recipe);
 
-        Recipe newProduct = productRepository.save(product);
+        Recipe newRecipe = recipeRepository.save(recipe);
 
         transactionService.log(
                 "CREATE",
                 "PRODUCT",
-                newProduct.getId(),
+                newRecipe.getId(),
                 extractName(jwt),
                 extractEmail(jwt),
-                "Rezept erstellt: " + newProduct.getTitle()
+                "Rezept erstellt: " + newRecipe.getTitle()
         );
 
-        LOG.info("Created new recipe with id {}", newProduct.getId());
-        return newProduct;
+        LOG.info("Created new recipe with id {}", newRecipe.getId());
+        return newRecipe;
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Recipe> updateProduct(
             @PathVariable Long id,
-            @RequestBody Recipe productDetails,
+            @RequestBody Recipe recipeDetails,
             @AuthenticationPrincipal Jwt jwt) {
 
-        Optional<Recipe> opt = productRepository.findById(id);
+        Optional<Recipe> opt = recipeRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Recipe product = opt.get();
-        if (!canManage(product, jwt)) {
+        Recipe recipe = opt.get();
+        if (!canManage(recipe, jwt)) {
             return ResponseEntity.status(403).build();
         }
-        product.setTitle(productDetails.getTitle());
-        product.setDescription(productDetails.getDescription());
-        product.setCategories(productDetails.getCategories());
-        product.setImageUrl(productDetails.getImageUrl());
-        if (productDetails.getInstructions() != null) {
-            product.setInstructions(productDetails.getInstructions());
-        } else if (productDetails.getDescription() != null) {
-            product.setInstructions(productDetails.getDescription());
+        recipe.setTitle(recipeDetails.getTitle());
+        recipe.setDescription(recipeDetails.getDescription());
+        recipe.setCategories(recipeDetails.getCategories());
+        recipe.setImageUrl(recipeDetails.getImageUrl());
+        if (recipeDetails.getInstructions() != null) {
+            recipe.setInstructions(recipeDetails.getInstructions());
+        } else if (recipeDetails.getDescription() != null) {
+            recipe.setInstructions(recipeDetails.getDescription());
         }
-        product.setPrepTimeMinutes(productDetails.getPrepTimeMinutes());
-        product.setServings(productDetails.getServings());
-        product.setIngredients(productDetails.getIngredients());
-        product.setSteps(productDetails.getSteps());
+        recipe.setPrepTimeMinutes(recipeDetails.getPrepTimeMinutes());
+        recipe.setServings(recipeDetails.getServings());
+        recipe.setIngredients(recipeDetails.getIngredients());
+        recipe.setSteps(recipeDetails.getSteps());
 
-        normalizeProduct(product);
-        validateProduct(product);
+        normalizeProduct(recipe);
+        validateProduct(recipe);
 
-        Recipe updatedProduct = productRepository.save(product);
+        Recipe updatedRecipe = recipeRepository.save(recipe);
 
         transactionService.log(
                 "UPDATE",
                 "PRODUCT",
-                updatedProduct.getId(),
+                updatedRecipe.getId(),
                 extractName(jwt),
                 extractEmail(jwt),
-                "Rezept bearbeitet: " + updatedProduct.getTitle()
+                "Rezept bearbeitet: " + updatedRecipe.getTitle()
         );
 
-        LOG.info("Updated recipe with id {}", updatedProduct.getId());
-        return ResponseEntity.ok(updatedProduct);
+        LOG.info("Updated recipe with id {}", updatedRecipe.getId());
+        return ResponseEntity.ok(updatedRecipe);
     }
 
     @DeleteMapping("/{id}")
@@ -163,37 +163,37 @@ public class RecipeController {
     public ResponseEntity<Object> deleteProduct(
             @PathVariable Long id,
             @AuthenticationPrincipal Jwt jwt) {
-        Optional<Recipe> opt = productRepository.findById(id);
+        Optional<Recipe> opt = recipeRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Recipe product = opt.get();
-        if (!canManage(product, jwt)) {
+        Recipe recipe = opt.get();
+        if (!canManage(recipe, jwt)) {
             return ResponseEntity.status(403).build();
         }
-        removeFromFavorites(product);
-        reviewRepository.deleteAll(reviewRepository.findByProductId(product.getId()));
-        mealPlanEntryRepository.deleteByProductId(product.getId());
-        shoppingItemCheckRepository.deleteByProductId(product.getId());
-        productRepository.delete(product);
+        removeFromFavorites(recipe);
+        reviewRepository.deleteAll(reviewRepository.findByProductId(recipe.getId()));
+        mealPlanEntryRepository.deleteByProductId(recipe.getId());
+        shoppingItemCheckRepository.deleteByProductId(recipe.getId());
+        recipeRepository.delete(recipe);
 
         transactionService.log(
                 "DELETE",
                 "PRODUCT",
-                product.getId(),
+                recipe.getId(),
                 extractName(jwt),
                 extractEmail(jwt),
-                "Rezept gelöscht: " + product.getTitle()
+                "Rezept gelöscht: " + recipe.getTitle()
         );
 
-        LOG.info("Deleted recipe with id {}", product.getId());
+        LOG.info("Deleted recipe with id {}", recipe.getId());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getProductById(@PathVariable Long id) {
-        Optional<Recipe> opt = productRepository.findById(id);
+        Optional<Recipe> opt = recipeRepository.findById(id);
         return opt.map(ResponseEntity::ok)
                   .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -204,7 +204,7 @@ public class RecipeController {
         if (email == null || email.isBlank()) {
             return List.of();
         }
-        return productRepository.findByCreatedByEmailIgnoreCase(email.trim());
+        return recipeRepository.findByCreatedByEmailIgnoreCase(email.trim());
     }
 
     private String extractEmail(Jwt jwt) {
@@ -232,8 +232,8 @@ public class RecipeController {
         return name;
     }
 
-    private boolean canManage(Recipe product, Jwt jwt) {
-        if (jwt == null || product == null) {
+    private boolean canManage(Recipe recipe, Jwt jwt) {
+        if (jwt == null || recipe == null) {
             return false;
         }
         if (isAdmin(jwt)) {
@@ -243,7 +243,7 @@ public class RecipeController {
         if (email == null || email.isBlank()) {
             return false;
         }
-        String createdBy = product.getCreatedByEmail();
+        String createdBy = recipe.getCreatedByEmail();
         return createdBy != null && createdBy.equalsIgnoreCase(email.trim());
     }
 
@@ -281,21 +281,22 @@ public class RecipeController {
         }
     }
 
-    private void normalizeProduct(Recipe product) {
-        if (product.getTitle() != null) {
-            product.setTitle(product.getTitle().trim());
+    // Eingaben trimmen, damit Validierung/DB konsistent bleiben
+    private void normalizeProduct(Recipe recipe) {
+        if (recipe.getTitle() != null) {
+            recipe.setTitle(recipe.getTitle().trim());
         }
-        if (product.getDescription() != null) {
-            product.setDescription(product.getDescription().trim());
+        if (recipe.getDescription() != null) {
+            recipe.setDescription(recipe.getDescription().trim());
         }
-        if (product.getInstructions() != null) {
-            product.setInstructions(product.getInstructions().trim());
+        if (recipe.getInstructions() != null) {
+            recipe.setInstructions(recipe.getInstructions().trim());
         }
-        if (product.getImageUrl() != null) {
-            product.setImageUrl(product.getImageUrl().trim());
+        if (recipe.getImageUrl() != null) {
+            recipe.setImageUrl(recipe.getImageUrl().trim());
         }
-        if (product.getIngredients() != null) {
-            for (Ingredient ing : product.getIngredients()) {
+        if (recipe.getIngredients() != null) {
+            for (Ingredient ing : recipe.getIngredients()) {
                 if (ing.getName() != null) {
                     ing.setName(ing.getName().trim());
                 }
@@ -304,8 +305,8 @@ public class RecipeController {
                 }
             }
         }
-        if (product.getSteps() != null) {
-            for (RecipeStep step : product.getSteps()) {
+        if (recipe.getSteps() != null) {
+            for (RecipeStep step : recipe.getSteps()) {
                 if (step.getText() != null) {
                     step.setText(step.getText().trim());
                 }
@@ -316,30 +317,31 @@ public class RecipeController {
         }
     }
 
-    private void validateProduct(Recipe product) {
-        if (product == null) {
+    // Harte Backend-Validierung (Frontend kann umgangen werden)
+    private void validateProduct(Recipe recipe) {
+        if (recipe == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produktdaten fehlen");
         }
-        String title = product.getTitle() != null ? product.getTitle().trim() : "";
+        String title = recipe.getTitle() != null ? recipe.getTitle().trim() : "";
         if (title.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel darf nicht leer sein");
         }
         if (title.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Titel ist zu kurz (mind. 3 Zeichen)");
         }
-        if (product.getCategories() == null || product.getCategories().isEmpty()) {
+        if (recipe.getCategories() == null || recipe.getCategories().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Kategorie ist erforderlich");
         }
-        Integer minutes = product.getPrepTimeMinutes();
+        Integer minutes = recipe.getPrepTimeMinutes();
         if (minutes == null || minutes <= 0 || minutes > 9999) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zubereitungszeit ist ungültig");
         }
-        Integer servings = product.getServings();
+        Integer servings = recipe.getServings();
         if (servings == null || servings <= 0 || servings > 1000) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Portionen sind ungültig");
         }
 
-        List<Ingredient> ingredients = product.getIngredients();
+        List<Ingredient> ingredients = recipe.getIngredients();
         if (ingredients == null || ingredients.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
         }
@@ -358,7 +360,7 @@ public class RecipeController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens eine Zutat ist erforderlich");
         }
 
-        List<RecipeStep> steps = product.getSteps();
+        List<RecipeStep> steps = recipe.getSteps();
         if (steps == null || steps.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mindestens ein Schritt ist erforderlich");
         }
@@ -375,17 +377,17 @@ public class RecipeController {
         }
     }
 
-    private void removeFromFavorites(Recipe product) {
-        if (product == null || product.getId() == null) {
+    private void removeFromFavorites(Recipe recipe) {
+        if (recipe == null || recipe.getId() == null) {
             return;
         }
-        List<User> users = userRepository.findByFavorites_Id(product.getId());
+        List<User> users = userRepository.findByFavorites_Id(recipe.getId());
         if (users == null || users.isEmpty()) {
             return;
         }
         for (User user : users) {
             if (user.getFavorites() != null) {
-                user.getFavorites().removeIf(fav -> product.getId().equals(fav.getId()));
+                user.getFavorites().removeIf(fav -> recipe.getId().equals(fav.getId()));
             }
         }
         userRepository.saveAll(users);
